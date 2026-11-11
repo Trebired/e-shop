@@ -35,6 +35,7 @@ const PACKED = [
   "README.md",
   "CHANGELOG.md",
 ];
+
 for (const file of PACKED) {
   assert.ok(listing.includes(file), `${file} is packed`);
 }
