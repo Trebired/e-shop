@@ -116,6 +116,8 @@ async function verifyTransitions(admin, order, raceOrder) {
   await admin.action(raceOrder.number, "cancel");
   const product = (await admin.products({ q: "hrnek" })).items[0];
   assert.equal(product.variants.find((variant) => variant.sku === "MUG-BLUE").stock, 1, "cancelling returns the stock");
+  assert.equal((await admin.product("hrnek")).product.id, product.id, "the admin API finds a product by its slug");
+  assert.equal((await admin.product(product.id)).product.slug, "hrnek", "the admin API finds a product by its id");
   const detail = await admin.order(order.number);
   assert.deepEqual(detail.events.map((event) => event.kind), ["created", "mark-paid", "ship", "deliver"], "every change is in the order history");
   const stats = await admin.stats();

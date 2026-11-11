@@ -55,7 +55,7 @@ An order moves `pending_payment` to `paid`, `processing`, `shipped` and `deliver
 
 ### Admin API
 
-`/eshop/admin/api/v1` covers statistics, products, variants, stock, categories and orders. Every request carries `x-eshop-timestamp` and `x-eshop-signature`, an HMAC-SHA256 over the timestamp, method, path and body hash with the admin token. A request older than five minutes, signed with another token, or replayed is refused. The API is mounted whenever the shop is, and no option turns it off. `createEshopAdminClient` from `@trebired/e-shop/client` signs requests for an admin application.
+`/eshop/admin/api/v1` covers statistics, products, variants, stock, categories and orders. `GET /products/:id` accepts a product slug in place of its id. Every request carries `x-eshop-timestamp` and `x-eshop-signature`, an HMAC-SHA256 over the timestamp, method, path and body hash with the admin token. A request older than five minutes, signed with another token, or replayed is refused. The API is mounted whenever the shop is, and no option turns it off. `createEshopAdminClient` from `@trebired/e-shop/client` signs requests for an admin application.
 
 ## Configuration
 

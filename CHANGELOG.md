@@ -4,6 +4,10 @@ All notable changes to `@trebired/e-shop` will be documented here.
 
 This project follows semantic versioning once published.
 
+## 0.1.1
+
+- The admin API and `client.product()` find a product by its slug as well as by its id.
+
 ## 0.1.0
 
 - Added the e-shop: catalog with categories, products, variants and stock, cart, checkout, orders with a status history, yearly order numbers and VAT per rate.

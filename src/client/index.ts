@@ -59,7 +59,7 @@ function createEshopAdminClient(options: AdminClientOptions) {
     info: () => request<{currency:string;locales:string[];name:string;payments:string[];version:string}>("GET", "/info"),
     order: (number: string) => request<{events:OrderEvent[];order:Order}>("GET", `/orders/${encodeURIComponent(number)}`),
     orders: (query: ListQuery = {}) => request<Page<Order>>("GET", `/orders${queryString(query)}`),
-    product: (id: string) => request<{product:Product}>("GET", `/products/${encodeURIComponent(id)}`),
+    product: (idOrSlug: string) => request<{product:Product}>("GET", `/products/${encodeURIComponent(idOrSlug)}`),
     products: (query: ListQuery = {}) => request<Page<Product>>("GET", `/products${queryString(query)}`),
     saveProduct: (input: Record<string, unknown>, id?: string) =>
     request<{product:Product}>(id ? "PUT" : "POST", id ? `/products/${encodeURIComponent(id)}` : "/products", input),

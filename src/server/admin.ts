@@ -14,6 +14,12 @@ import { availablePaymentMethods } from "./payments.js";
 import { verifySignature } from "./signing.js";
 import { eshopStats } from "./stats.js";
 
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/iu;
+
+function productRef(value: string): { id?: string; slug?: string } {
+  return UUID_PATTERN.test(value) ? { id: value } : { slug: value };
+}
+
 const ACTOR = "admin";
 
 async function authorize(context: EshopContext, route: RouteContext): Promise<void> {
@@ -46,7 +52,7 @@ function catalogAdmin(context: EshopContext, add: (method: string, path: string,
     async(route) => await listProducts(context.db, { ...pageOf(route), status: (route.query.get("status") as any) ?? undefined })
   );
   add("POST", "/products", async(route) => ({ product: await saveProduct(context.db, await route.json(), vat) }));
-  add("GET", "/products/:id", async(route) => ({ product: await getProduct(context.db, { id: route.params.id }) }));
+  add("GET", "/products/:id", async(route) => ({ product: await getProduct(context.db, productRef(String(route.params.id ?? ""))) }));
   add("PUT", "/products/:id", async(route) => ({ product: await saveProduct(context.db, await route.json(), { ...vat, id: route.params.id }) }));
   add("DELETE", "/products/:id", async(route) => void(await deleteProduct(context.db, route.params.id as string)));
   add("POST", "/products/:id/variants", async(route) => ({ variant: await saveVariant(context.db, route.params.id as string, await route.json()) }));
