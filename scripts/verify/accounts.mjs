@@ -15,7 +15,7 @@ const PASSWORD = "correct horse battery";
 
 const CONFIG = {
   accounts: { resetPath: "/account/reset/{token}" },
-  forVersion: "0.5.0",
+  forVersion: "0.6.0",
   mail: { from: "shop@verify.test" },
   payments: { bankTransfer: { accountName: "Verify s.r.o.", iban: "CZ6508000000192000145399" } },
   shipping: [{ id: "pickup", kind: "pickup", label: { cs: "Osobní odběr", en: "Pickup" }, priceMinor: 0 }],

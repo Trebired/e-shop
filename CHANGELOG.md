@@ -4,6 +4,14 @@ All notable changes to `@trebired/e-shop` will be documented here.
 
 This project follows semantic versioning once published.
 
+## 0.6.0
+
+- Added the storefront preset. With `storefront` in the config, `eshopStorefront(config)` provides every shop page: catalog with category filters and paging, product, cart, checkout, order, account and password reset. It also provides the page list for the build, a shared `Provider`, `CartLink`, `href()` and page slots for the app's own content.
+- `createEshop({ storefrontDir })` serves the built storefront page for each storefront address.
+- Order links and password reset links follow the storefront routes unless `orders.statusPath` or `accounts.resetPath` is set.
+- Added Bitcoin payments through BTCPay Server: invoices, signed webhooks, and refunds whose claim link the order page shows.
+- The catalog API filters by category slug.
+
 ## 0.5.1
 
 - `ProductDetail` shows the product name as the page heading and its first image, and leaves out an empty description.

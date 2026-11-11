@@ -12,6 +12,7 @@ import { dispatch } from "./http.js";
 import { createMailer } from "./mail.js";
 import { createPacketaClient, type PacketaSecrets } from "./packeta.js";
 import { storefrontRouter } from "./storefront.js";
+import { storefrontPageServer } from "./storefront_pages.js";
 
 type CreateEshopOptions = {
   adminToken: string;
@@ -22,6 +23,7 @@ type CreateEshopOptions = {
   pool: pg.Pool;
   publicUrl?: string;
   smtpUrl?: string;
+  storefrontDir?: string;
 };
 
 const MIN_TOKEN_LENGTH = 32;
@@ -49,8 +51,10 @@ function createEshop(options: CreateEshopOptions) {
     publicUrl: options.publicUrl ?? "",
   };
   const routers = [adminRouter(context), storefrontRouter(context)];
+  const pages = storefrontPageServer(config, options.storefrontDir);
   const handle = async(req: any, res: any, next?: () => void) => {
     for (const router of routers) if (await dispatch(router, req, res)) return;
+    if (pages && pages(req, res)) return;
     if (next) next();
     else {
       res.statusCode = 404;

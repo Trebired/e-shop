@@ -14,10 +14,12 @@ const DATABASE_URL = process.env.TEST_DATABASE_URL;
 const STRIPE = { secretKey: "sk_test_verify", webhookSecret: "whsec_verify" };
 const GOPAY = { clientId: "verify-client", clientSecret: "verify-secret" };
 const COMGATE = { secret: "comgate-secret" };
+const BTCPAY = { apiKey: "btcpay-key", webhookSecret: "btcpay-hook-secret" };
+const STORE = "STORE1";
 const MERCHANT = "123456";
 
 const CONFIG = {
-  forVersion: "0.5.0",
+  forVersion: "0.6.0",
   payments: {
     bankTransfer: { accountName: "Verify s.r.o.", iban: "CZ6508000000192000145399" },
     comgate: { merchant: MERCHANT, test: true },
@@ -86,6 +88,22 @@ function fakeComgate(state, req, url, body, res) {
   return status ? json(res, 200, { code: 0, message: "OK", status: state.comgate[status[1]]?.status }) : json(res, 404, {});
 }
 
+function fakeBtcpay(state, req, url, body, res) {
+  if (req.headers.authorization !== `token ${BTCPAY.apiKey}`) return json(res, 401, {});
+  if (req.method === "POST" && url.pathname === `/api/v1/stores/${STORE}/invoices`) {
+    const id = `INV${++state.seq}`;
+    state.btcpay[id] = { body, status: "New" };
+    return json(res, 200, { checkoutLink: `https://pay.test/btcpay/${id}`, id, status: "New" });
+  }
+  const refund = url.pathname.match(/^\/api\/v1\/invoices\/([^/]+)\/refund$/u);
+  if (refund) {
+    state.refunds.push({ gateway: "btcpay", reference: refund[1], variant: body.refundVariant });
+    return json(res, 200, { id: "pp1", viewLink: `https://pay.test/btcpay/claim/${refund[1]}` });
+  }
+  const invoice = url.pathname.match(/^\/api\/v1\/invoices\/([^/]+)$/u);
+  return invoice ? json(res, 200, { id: invoice[1], status: state.btcpay[invoice[1]]?.status }) : json(res, 404, {});
+}
+
 async function fakeGateways(state) {
   return await listen(async(req, res) => {
       const raw = await new Response(req).text();
@@ -94,7 +112,7 @@ async function fakeGateways(state) {
       const body = form ? new URLSearchParams(raw) : raw ? JSON.parse(raw) : {};
       const [, kind] = url.pathname.split("/");
       url.pathname = url.pathname.slice(kind.length + 1);
-      const handler = { comgate: fakeComgate, gopay: fakeGopay, stripe: fakeStripe }[kind];
+      const handler = { btcpay: fakeBtcpay, comgate: fakeComgate, gopay: fakeGopay, stripe: fakeStripe }[kind];
       return handler ? handler(state, req, url, body, res) : json(res, 404, {});
   });
 }
@@ -193,6 +211,32 @@ async function verifyComgate(shop, admin, state, variantId) {
   assert.equal((await admin.order(placed.number)).order.payment.status, "refunded", "the cancelled card payment is marked refunded");
 }
 
+function btcpaySignature(body, secret = BTCPAY.webhookSecret) {
+  return `sha256=${crypto.createHmac("sha256", secret).update(body).digest("hex")}`;
+}
+
+async function verifyBtcpay(shop, admin, state, variantId) {
+  const placed = await order(shop, variantId, "btcpay");
+  assert.match(placed.payment.redirectUrl, /^https:\/\/pay\.test\/btcpay\/INV/u, "a Bitcoin order sends the customer to BTCPay Server");
+  const sent = state.btcpay[placed.payment.reference].body;
+  assert.equal(sent.amount, (placed.totals.totalMinor / 100).toFixed(2), "BTCPay is asked for the order total in whole units");
+  assert.equal(sent.metadata.orderId, placed.number, "the invoice carries the order number");
+  assert.match(sent.checkout.redirectURL, /\/eshop\/api\/payments\/btcpay\/return\?id=\{InvoiceId\}$/u, "the customer comes back to the shop");
+  const event = (storeId) => JSON.stringify({ invoiceId: placed.payment.reference, storeId, type: "InvoiceSettled" });
+  const hook = async(body, signature) => await call(shop, "POST", "/eshop/api/payments/btcpay/notify", body, { "btcpay-sig": signature });
+  assert.equal((await hook(event(STORE), btcpaySignature(event(STORE), "other"))).status, 401, "a webhook signed with another secret is refused");
+  state.btcpay[placed.payment.reference].status = "Settled";
+  await hook(event("OTHER"), btcpaySignature(event("OTHER")));
+  assert.equal((await admin.order(placed.number)).order.status, "pending_payment", "an event from another store changes nothing");
+  assert.equal((await hook(event(STORE), btcpaySignature(event(STORE)))).status, 200, "a signed webhook is accepted");
+  assert.equal((await admin.order(placed.number)).order.status, "paid", "a settled invoice marks the order paid");
+  await admin.action(placed.number, "refund");
+  assert.equal(state.refunds.at(-1).variant, "Fiat", "a Bitcoin refund returns the amount the customer paid in the shop currency");
+  const refunded = (await admin.order(placed.number)).order.payment;
+  const claim = `https://pay.test/btcpay/claim/${placed.payment.reference}`;
+  assert.equal(refunded.refundUrl, claim, "the order keeps the link where the customer claims the refund");
+}
+
 function verifyMissingSecrets(server, pool) {
   const start = () => server.createEshop({ adminToken: TOKEN, config: CONFIG, pool });
   assert.throws(start, /e-shop-gateway-secrets-missing/u, "an enabled gateway without credentials stops the start");
@@ -205,14 +249,15 @@ async function verifyGateways() {
   const pool = new pg.Pool({ connectionString: DATABASE_URL, max: 8 });
   await resetDatabase(pool);
   verifyMissingSecrets(server, pool);
-  const state = { comgate: {}, gopay: {}, refunds: [], seq: 0, stripe: {} };
+  const state = { btcpay: {}, comgate: {}, gopay: {}, refunds: [], seq: 0, stripe: {} };
   const fake = await fakeGateways(state);
   let eshop = null;
   const shop = await listen((req, res) => eshop.handle(req, res));
   eshop = server.createEshop({
       adminToken: TOKEN,
-      config: CONFIG,
+      config: { ...CONFIG, payments: { ...CONFIG.payments, btcpay: { serverUrl: `${fake.url}/btcpay`, storeId: STORE } } },
       gateways: {
+        btcpay: BTCPAY,
         comgate: { ...COMGATE, apiBase: `${fake.url}/comgate` },
         gopay: { ...GOPAY, apiBase: `${fake.url}/gopay` },
         stripe: { ...STRIPE, apiBase: `${fake.url}/stripe` },
@@ -225,10 +270,11 @@ async function verifyGateways() {
   const product = (await admin.saveProduct({ name: { cs: "Hrnek", en: "Mug" }, slug: "hrnek", status: "active" })).product;
   const variant = (await admin.saveVariant(product.id, { priceMinor: 25000, sku: "MUG", stock: null })).variant;
   const offered = (await call(shop.url, "GET", "/eshop/api/checkout/options")).json.payments;
-  assert.deepEqual(offered, ["bank_transfer", "stripe", "gopay", "comgate"], "every configured method is offered");
+  assert.deepEqual(offered, ["bank_transfer", "stripe", "gopay", "comgate", "btcpay"], "every configured method is offered");
   await verifyStripe(shop.url, admin, state, variant.id);
   await verifyGopay(shop.url, admin, state, variant.id);
   await verifyComgate(shop.url, admin, state, variant.id);
+  await verifyBtcpay(shop.url, admin, state, variant.id);
   shop.server.close();
   fake.server.close();
   await resetDatabase(pool);

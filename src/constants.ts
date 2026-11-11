@@ -1,5 +1,5 @@
 const ORDER_STATUSES = ["pending_payment", "paid", "processing", "shipped", "delivered", "cancelled", "refunded"] as const;
-const PAYMENT_METHODS = ["bank_transfer", "stripe", "gopay", "comgate"] as const;
+const PAYMENT_METHODS = ["bank_transfer", "stripe", "gopay", "comgate", "btcpay"] as const;
 const SHIPPING_KINDS = ["pickup", "courier", "packeta"] as const;
 const ADMIN_API_VERSION = "v1";
 const SIGNATURE_HEADER = "x-eshop-signature";

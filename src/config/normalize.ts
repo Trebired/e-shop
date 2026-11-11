@@ -12,7 +12,9 @@ import type {
   NormalizedGateways,
   PacketaConfig,
   ShippingMethodConfig,
+  StorefrontConfig,
 } from "./types.js";
+import { STOREFRONT_ROUTES, type StorefrontPage, type StorefrontSettings } from "./../storefront.js";
 
 const IBAN = /^[A-Z]{2}\d{2}[A-Z0-9]{10,30}$/u;
 const ID = /^[a-z0-9_-]{1,40}$/u;
@@ -57,7 +59,12 @@ function normalizeGateways(value: GatewaysConfig | undefined): NormalizedGateway
   const comgate = value?.comgate;
   if (gopay && !/^\d{6,12}$/u.test(String(gopay.goid ?? ""))) throw invalid("payments.gopay.goid must be the numeric GoPay shop id");
   if (comgate && !String(comgate.merchant ?? "").trim()) throw invalid("payments.comgate.merchant is required");
+  const btcpay = value?.btcpay;
+  const serverUrl = String(btcpay?.serverUrl ?? "");
+  if (btcpay && !/^https?:\/\/[^\s]+$/u.test(serverUrl)) throw invalid("payments.btcpay.serverUrl must be the BTCPay Server address");
+  if (btcpay && !String(btcpay.storeId ?? "").trim()) throw invalid("payments.btcpay.storeId is required");
   return {
+    btcpay: btcpay ? { serverUrl: String(btcpay.serverUrl).replace(/\/+$/u, ""), storeId: String(btcpay.storeId).trim() } : null,
     comgate: comgate ? { merchant: String(comgate.merchant).trim(), test: comgate.test === true } : null,
     gopay: gopay ? { goid: String(gopay.goid), sandbox: gopay.sandbox === true } : null,
     stripe: value?.stripe?.enabled ? { enabled: true } : null,
@@ -98,10 +105,29 @@ function normalizeInvoices(value: InvoicesConfig | undefined): NormalizedEshopCo
   };
 }
 
+const ROUTE = /^\/[a-z0-9/_-]*(\{(slug|token)\})?$/u;
+const NEEDS: Partial<Record<StorefrontPage, string>> = { order: "{token}", product: "{slug}", reset: "{token}" };
+const PAGE_SIZE_MAX = 100;
+
+function normalizeStorefront(value: StorefrontConfig | undefined): StorefrontSettings | null {
+  if (!value) return null;
+  const routes = { ...STOREFRONT_ROUTES, ...(value.routes ?? {}) };
+  for (const [page, route] of Object.entries(routes) as [StorefrontPage, string][]) {
+    if (!ROUTE.test(route)) throw invalid(`storefront.routes.${page} is not a path`);
+    const needed = NEEDS[page];
+    const rule = needed ? `end with ${needed}` : "not hold a placeholder";
+    if (needed ? !route.endsWith(needed) : route.includes("{")) throw invalid(`storefront.routes.${page} must ${rule}`);
+  }
+  if ((value.preset ?? "preset_01") !== "preset_01") throw invalid("storefront.preset must be preset_01");
+  const pageSize = Math.min(Math.max(Math.floor(Number(value.catalog?.pageSize ?? 24)), 1), PAGE_SIZE_MAX);
+  return { catalog: { categories: value.catalog?.categories !== false, pageSize }, preset: "preset_01", routes };
+}
+
 function normalizeConfig(config: EshopConfig, options: { configPath?: string; requireForVersion?: boolean } = {}): NormalizedEshopConfig {
   if (!config || typeof config !== "object" || !config.shop?.name) throw invalid("shop.name is required");
   const locales = config.shop.locales?.length ? config.shop.locales : ["cs"];
   const shipping = normalizeShipping(config.shipping);
+  const storefront = normalizeStorefront(config.storefront);
   const basePath = `/${String(config.basePath ?? "/eshop").replace(/^\/+|\/+$/gu, "")}`;
   return {
     basePath,
@@ -115,12 +141,13 @@ function normalizeConfig(config: EshopConfig, options: { configPath?: string; re
         requireForVersion: options.requireForVersion,
     }),
     mail: { from: String(config.mail?.from ??""), operator: String(config.mail?.operator ?? "") },
-    accounts: config.accounts ? { resetPath: String(config.accounts.resetPath ?? "/account/reset/{token}") } : null,
+    accounts: config.accounts ? { resetPath: String(config.accounts.resetPath ?? storefront?.routes.reset ?? "/account/reset/{token}") } : null,
     invoices: normalizeInvoices(config.invoices),
-    orders: { statusPath: String(config.orders?.statusPath ?? "/order/{token}") },
+    orders: { statusPath: String(config.orders?.statusPath ?? storefront?.routes.order ?? "/order/{token}") },
     packeta: normalizePacketa(config, shipping),
     payments: { bankTransfer: normalizeBank(config.payments?.bankTransfer), ...normalizeGateways(config.payments) },
     shipping,
+    storefront,
     shop: {
       currency: String(config.shop.currency ?? "CZK").toUpperCase(),
       defaultLocale: config.shop.defaultLocale ?? (locales[0] as string),

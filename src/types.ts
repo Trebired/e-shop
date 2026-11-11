@@ -3,7 +3,7 @@ type Localized = Record<string, string>;
 type ProductStatus = "active" | "archived" | "draft";
 type OrderStatus = "cancelled" | "delivered" | "paid" | "pending_payment" | "processing" | "refunded" | "shipped";
 type PaymentStatus = "failed" | "paid" | "pending" | "refunded";
-type PaymentMethodKind = "bank_transfer" | "comgate" | "gopay" | "stripe";
+type PaymentMethodKind = "bank_transfer" | "btcpay" | "comgate" | "gopay" | "stripe";
 type ShippingKind = "courier" | "packeta" | "pickup";
 
 type ProductImage = { alt: string; src: string };
@@ -85,6 +85,7 @@ type OrderPayment = {
   method: PaymentMethodKind;
   redirectUrl: string;
   reference: string;
+  refundUrl?: string;
   status: PaymentStatus;
 };
 

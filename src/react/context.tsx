@@ -41,5 +41,5 @@ function useStorefront(): Storefront {
   return value;
 }
 
-export { EshopProvider, useStorefront };
+export { EshopProvider, StorefrontContext, useStorefront };
 export type { Storefront };

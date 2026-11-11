@@ -81,7 +81,8 @@ async function refundThroughGateway(context: EshopContext, number: string, actio
   const gateway = gatewayOf(context, order);
   if (!gateway || order.payment.status !== "paid" || !order.payment.reference) return;
   if (!ORDER_MOVES[action].from.includes(order.status)) return;
-  await gateway.refund(order.payment.reference, order.totals.totalMinor);
+  const refunded = await gateway.refund(order.payment.reference, order.totals.totalMinor);
+  if (refunded && refunded.claimUrl) await savePayment(context, order, { refundUrl: refunded.claimUrl });
 }
 
 export { orderByReference, refreshPayment, refundThroughGateway, settle, startPayment };

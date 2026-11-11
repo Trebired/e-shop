@@ -1,5 +1,7 @@
 import assert from "node:assert/strict";
 import crypto from "node:crypto";
+import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import pg from "pg";
@@ -13,7 +15,7 @@ const TOKEN = crypto.randomBytes(32).toString("hex");
 const DATABASE_URL = process.env.TEST_DATABASE_URL;
 
 const CONFIG = {
-  forVersion: "0.5.0",
+  forVersion: "0.6.0",
   payments: { bankTransfer: { accountName: "Verify s.r.o.", iban: "CZ6508000000192000145399" } },
   shipping: [
     { id: "pickup", kind: "pickup", label: { cs: "Osobní odběr", en: "Pickup" }, priceMinor: 0 },
@@ -137,6 +139,20 @@ async function verifyEvents(server, pool) {
   receiver.server.close();
 }
 
+async function verifyStorefrontPages(server, pool) {
+  const dist = fs.mkdtempSync(path.join(os.tmpdir(), "eshop-pages-"));
+  fs.mkdirSync(path.join(dist, "products", "_"), { recursive: true });
+  fs.writeFileSync(path.join(dist, "products", "_", "index.html"), "<html>product shell</html>");
+  const eshop = server.createEshop({ adminToken: TOKEN, config: { ...CONFIG, storefront: {} }, pool, storefrontDir: dist });
+  const shop = await listen((req, res) => eshop.handle(req, res));
+  const product = await fetch(`${shop.url}/products/hrnek`);
+  assert.equal(await product.text(), "<html>product shell</html>", "a product address is served the built product page");
+  assert.equal((await fetch(`${shop.url}/products/a/b`)).status, 404, "an address outside the storefront routes is left to the app");
+  assert.equal((await fetch(`${shop.url}/cart`)).status, 404, "a storefront page that was not built is left to the app");
+  shop.server.close();
+  fs.rmSync(dist, { force: true, recursive: true });
+}
+
 async function verifyServer() {
   if (!DATABASE_URL) throw new Error("TEST_DATABASE_URL is required for verify:server");
   const server = await importDist("server");
@@ -157,6 +173,7 @@ async function verifyServer() {
   await verifyTransitions(admin, order, raceOrder);
   verifySpayd(server);
   await verifyEvents(server, pool);
+  await verifyStorefrontPages(server, pool);
   http0.close();
   await resetDatabase(pool);
   await pool.end();

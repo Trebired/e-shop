@@ -19,6 +19,9 @@
       "#1z2mvy1yjhol": [
         "../../../scripts/build/generated/tsconfig.mjs"
       ],
+      "#24a0bfwbf0id": [
+        "../../../src/storefront.ts"
+      ],
       "#2qd070rg2ycg": [
         "../../../src/server/invoices/copy.ts"
       ],
@@ -52,6 +55,9 @@
       "#5ntdf7ap7et2": [
         "../../../src/server/payments.ts"
       ],
+      "#5vh6bfbx9gzd": [
+        "../../../src/server/gateways/btcpay.ts"
+      ],
       "#889fz2eni8jm": [
         "../../../src/server/cart.ts"
       ],
@@ -60,6 +66,9 @@
       ],
       "#9vkhmxqn5mgi": [
         "../../../src/server/catalog/categories.ts"
+      ],
+      "#ary1mp2lfmat": [
+        "../../../src/react/storefront/settings.tsx"
       ],
       "#auxefl96vrkd": [
         "../../../src/config/load.ts"
@@ -142,6 +151,9 @@
       "#kjrydbw63ezg": [
         "../../logger/config.ts"
       ],
+      "#lcbpsl5nydrw": [
+        "../../../src/react/storefront/pages.tsx"
+      ],
       "#lchov68lqydp": [
         "../../../src/server/db/database.ts"
       ],
@@ -165,6 +177,9 @@
       ],
       "#pyvwusrner1k": [
         "../../../src/server/gateways/flow.ts"
+      ],
+      "#qqles56o2gr4": [
+        "../../../src/server/storefront_pages.ts"
       ],
       "#qx5s8tvkp6rr": [
         "../../../scripts/verify/accounts.mjs"
@@ -198,6 +213,9 @@
       ],
       "#ujt2rkr347fz": [
         "../../../src/react/context.tsx"
+      ],
+      "#v388xbhwarco": [
+        "../../../src/react/storefront/index.tsx"
       ],
       "#vckfzf3tampi": [
         "../../../src/orders.ts"

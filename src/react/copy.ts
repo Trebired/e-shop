@@ -4,7 +4,8 @@ type StorefrontCopy = { accountErrors: Record<string, string>; paymentMethods: R
 |"paymentWaiting" | "phone" | "placeOrder" | "postalCode" | "quantity" | "remove" | "shipping" | "status"
 |"street" | "subtotal" | "total" | "variant" | "variableSymbol" | "dueDate" | "free" | "pickupPoint" | "choosePickupPoint" | "track"
 |"invoice" | "creditNote" | "error" | "login" | "register" | "logout" | "password" | "newPassword" | "forgot" | "sendReset"
-|"resetSent" | "setPassword" | "resetDone" | "signedInAs" | "myOrders" | "noOrders",
+|"resetSent" | "setPassword" | "resetDone" | "signedInAs" | "myOrders" | "noOrders" | "allProducts" | "products" | "noProducts" | "more"
+|"productMissing" | "yourOrder" | "account" | "refundClaim",
 string
 >;
 
@@ -31,6 +32,14 @@ const COPY: Record<string, StorefrontCopy> = {
       "eshop-password-weak": "Heslo musí mít aspoň 10 znaků.",
       "eshop-reset-invalid": "Odkaz pro obnovu hesla neplatí. Požádejte o nový.",
     },
+    account: "Účet",
+    allProducts: "Všechny produkty",
+    more: "Zobrazit další",
+    noProducts: "Zatím žádné produkty.",
+    productMissing: "Tento produkt není v prodeji.",
+    products: "Produkty",
+    refundClaim: "Převzít vrácenou platbu",
+    yourOrder: "Vaše objednávka",
     forgot: "Zapomenuté heslo",
     login: "Přihlásit se",
     logout: "Odhlásit se",
@@ -45,7 +54,13 @@ const COPY: Record<string, StorefrontCopy> = {
     setPassword: "Nastavit heslo",
     signedInAs: "Přihlášeni jako {{name}}",
     creditNote: "Opravný doklad",
-    paymentMethods: { bank_transfer: "Bankovní převod", comgate: "Platba kartou (Comgate)", gopay: "Platba kartou (GoPay)", stripe: "Platba kartou" },
+    paymentMethods: {
+      bank_transfer: "Bankovní převod",
+      btcpay: "Bitcoin",
+      comgate: "Platba kartou (Comgate)",
+      gopay: "Platba kartou (GoPay)",
+      stripe: "Platba kartou",
+    },
     accountName: "Majitel účtu", add: "Přidat do košíku", added: "Přidáno do košíku", address: "Fakturační adresa", cart: "Košík",
     checkout: "Pokladna", city: "Město", continue: "Pokračovat v nákupu", dueDate: "Splatnost", email: "E-mail", empty: "Košík je prázdný.",
     error: "Akce se nepovedla.", free: "Zdarma", iban: "Účet (IBAN)", name: "Jméno a příjmení", note: "Poznámka", orderPlaced: "Objednávka " +
@@ -78,6 +93,14 @@ const COPY: Record<string, StorefrontCopy> = {
       "eshop-password-weak": "The password needs at least 10 characters.",
       "eshop-reset-invalid": "The reset link is no longer valid. Ask for a new one.",
     },
+    account: "Account",
+    allProducts: "All products",
+    more: "Show more",
+    noProducts: "No products yet.",
+    productMissing: "This product is not for sale.",
+    products: "Products",
+    refundClaim: "Claim your refund",
+    yourOrder: "Your order",
     forgot: "Forgotten password",
     login: "Sign in",
     logout: "Sign out",
@@ -92,7 +115,7 @@ const COPY: Record<string, StorefrontCopy> = {
     setPassword: "Set the password",
     signedInAs: "Signed in as {{name}}",
     creditNote: "Credit note",
-    paymentMethods: { bank_transfer: "Bank transfer", comgate: "Card (Comgate)", gopay: "Card (GoPay)", stripe: "Card" },
+    paymentMethods: { btcpay: "Bitcoin", bank_transfer: "Bank transfer", comgate: "Card (Comgate)", gopay: "Card (GoPay)", stripe: "Card" },
     accountName: "Account holder", add: "Add to cart", added: "Added to cart", address: "Billing address", cart: "Cart",
     checkout: "Checkout", city: "City", continue: "Continue shopping", dueDate: "Due date", email: "Email", empty: "Your cart is empty.",
     error: "The action failed.", free: "Free", iban: "Account (IBAN)", name: "Full name", note: "Note", orderPlaced: "Order {{number}} is received.",

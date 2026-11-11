@@ -93,6 +93,7 @@ function OrderSummary(props: { invoices?: InvoiceSummary[]; order: Order }) {
     <BankTransfer order={order} />
     <OnlinePayment order={order} />
     <Invoices invoices={props.invoices ?? []} token={order.token} />
+    {order.payment.refundUrl ? <a href={order.payment.refundUrl} rel="noopener noreferrer" target="_blank">{copy.refundClaim}</a> : null}
     </Stack>
   );
 }

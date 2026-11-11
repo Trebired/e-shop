@@ -8,3 +8,5 @@ export type { StorefrontCopy } from "./copy.js";
 export { useCatalog, useOrder, useProduct } from "./hooks.js";
 export { OrderStatus, OrderSummary } from "./order.js";
 export { ProductCard, ProductDetail, ProductGrid } from "./products.js";
+export { eshopStorefront } from "./storefront/index.js";
+export type { EshopStorefront, StorefrontSlots } from "./storefront/index.js";

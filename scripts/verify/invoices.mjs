@@ -26,7 +26,7 @@ const SUPPLIER = {
 };
 
 const CONFIG = {
-  forVersion: "0.5.0",
+  forVersion: "0.6.0",
   invoices: { supplier: SUPPLIER },
   mail: { from: "shop@verify.test" },
   payments: { bankTransfer: { accountName: "Verify s.r.o.", iban: "CZ6508000000192000145399" } },

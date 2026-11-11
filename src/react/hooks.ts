@@ -22,7 +22,7 @@ function useLoad<T>(path: string | null): Loaded<T> {
   return state;
 }
 
-function useCatalog(query: { limit?: number; offset?: number; q?: string } = {}) {
+function useCatalog(query: { category?: string; limit?: number; offset?: number; q?: string } = {}) {
   const params = new URLSearchParams(Object.entries(query).filter(([, value]) => value !== undefined).map(([key, value]) => [key, String(value)]));
   return useLoad<{categories:Category[];items:Product[];total:number}>(`/catalog${params.size ? `?${params}` : ""}`);
 }

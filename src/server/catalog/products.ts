@@ -7,7 +7,7 @@ const STATUSES: ProductStatus[] = ["draft", "active", "archived"];
 const MAX_IMAGES = 20;
 const UNIQUE_VIOLATION = "23505";
 
-type ProductQuery = { activeOnly?: boolean; limit?: number; offset?: number; q?: string; status?: ProductStatus };
+type ProductQuery = { activeOnly?: boolean; category?: string; limit?: number; offset?: number; q?: string; status?: ProductStatus };
 
 function toVariant(row: any): Variant {
   return {
@@ -51,14 +51,17 @@ async function withVariants(db: Db, rows: any[], activeOnly: boolean): Promise<P
 async function listProducts(db: Db, query: ProductQuery = {}): Promise<{items:Product[];total:number}> {
   const status = query.activeOnly ? "active" : query.status ?? null;
   const search = query.q ? `%${query.q.toLowerCase()}%` : null;
-  const where = "($1::text is null or status = $1) and ($2::text is null or lower(name::text) like $2 or slug like $2)";
-  const rows = await db.many(`select * from eshop_products where ${where} order by updated_at desc limit $3 offset $4`, [
+  const category = query.category ? String(query.category) : null;
+  const where = `($1::text is null or status = $1) and ($2::text is null or lower(name::text) like $2 or slug like $2)
+    and ($3::text is null or category_id = (select id from eshop_categories where slug = $3))`;
+  const rows = await db.many(`select * from eshop_products where ${where} order by updated_at desc limit $4 offset $5`, [
       status,
       search,
+      category,
       Math.min(Math.max(query.limit ?? 50, 1), 200),
       Math.max(query.offset ?? 0, 0),
   ]);
-  const total = await db.one<{count:number}>(`select count(*)::int as count from eshop_products where ${where}`, [status, search]);
+  const total = await db.one<{count:number}>(`select count(*)::int as count from eshop_products where ${where}`, [status, search, category]);
   return { items: await withVariants(db, rows, Boolean(query.activeOnly)), total: total?.count ?? 0 };
 }
 

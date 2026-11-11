@@ -1,4 +1,5 @@
 import type { NormalizedEshopConfig } from "./../../config/types.js";
+import { createBtcpayGateway } from "./btcpay.js";
 import { createComgateGateway } from "./comgate.js";
 import { createGopayGateway } from "./gopay.js";
 import { createStripeGateway } from "./stripe.js";
@@ -24,6 +25,10 @@ function createGateways(config: NormalizedEshopConfig, secrets: GatewaySecrets =
   if (payments.comgate) {
     if (!secrets.comgate?.secret) throw missing("comgate");
     out.comgate = createComgateGateway(payments.comgate, secrets.comgate);
+  }
+  if (payments.btcpay) {
+    if (!secrets.btcpay?.apiKey || !secrets.btcpay.webhookSecret) throw missing("btcpay");
+    out.btcpay = createBtcpayGateway(payments.btcpay, secrets.btcpay);
   }
   return out;
 }

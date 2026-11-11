@@ -30,6 +30,7 @@ function catalogRoutes(context: EshopContext, router: ReturnType<typeof createRo
               limit: Number(route.query.get("limit") ?? 50),
               offset: Number(route.query.get("offset") ?? 0),
               q: route.query.get("q") ?? undefined,
+              category: route.query.get("category") ?? undefined,
         })),
   }));
   router.add("GET", "/products/:slug", async(route) => ({ product: await getProduct(context.db, { slug: route.params.slug }, true) }));

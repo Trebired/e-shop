@@ -1,6 +1,6 @@
 # @trebired/e-shop
 
-Postgres-backed e-shop for Bun apps: catalog with variants and stock, cart, checkout, orders with a status history, Czech bank transfer payments with a QR code, card payments through Stripe, GoPay and Comgate, Packeta pickup points with packet creation and labels, Czech invoices and credit notes as PDF, customer accounts, order email, a storefront structure for `@trebired/frontend`, and a signed admin API that is always on.
+Postgres-backed e-shop for Bun apps: catalog with variants and stock, cart, checkout, orders with a status history, Czech bank transfer payments with a QR code, card payments through Stripe, GoPay and Comgate, Bitcoin through BTCPay Server, Packeta pickup points with packet creation and labels, Czech invoices and credit notes as PDF, customer accounts, order email, a complete storefront for `@trebired/frontend` with every shop page, and a signed admin API that is always on.
 
 The package owns the shop schema, the order rules, the storefront and admin HTTP routes and the storefront components. The app owns its Postgres pool, its pages and their layout, its SMTP account, its public address, the admin token and its payment gateway accounts and credentials. The package does not own product photography storage, accounting, a customer marketing system or the admin interface itself; an admin application drives it through the admin API.
 
@@ -54,7 +54,7 @@ An order moves `pending_payment` to `paid`, `processing`, `shipped` and `deliver
 
 ### Payments
 
-Bank transfer shows the account, the variable symbol and a QR payment code; the operator marks the order paid. Stripe, GoPay and Comgate share one payment interface. Checkout creates the order, then starts the payment and returns `payment.redirectUrl`, where the customer pays. The gateway's notification and the customer's return are both checked by asking the gateway for the payment status, so a forged or repeated notification changes nothing and a paid order is marked paid once. A failed or abandoned payment leaves the order waiting, and `POST /orders/:token/pay` starts a new one. Refunding, or cancelling a paid card order, returns the money through the same gateway before the order changes.
+Bank transfer shows the account, the variable symbol and a QR payment code; the operator marks the order paid. Stripe, GoPay and Comgate share one payment interface. Checkout creates the order, then starts the payment and returns `payment.redirectUrl`, where the customer pays. The gateway's notification and the customer's return are both checked by asking the gateway for the payment status, so a forged or repeated notification changes nothing and a paid order is marked paid once. A failed or abandoned payment leaves the order waiting, and `POST /orders/:token/pay` starts a new one. Refunding, or cancelling a paid card order, returns the money through the same gateway before the order changes. Bitcoin runs through the shop's own BTCPay Server: the customer pays an invoice there, the settled invoice marks the order paid, and a refund creates a BTCPay refund whose claim link the order page shows, because a Bitcoin refund is sent to an address the customer gives.
 
 ### Packeta
 
@@ -67,6 +67,23 @@ With `invoices.supplier` configured, paying an order issues its invoice and atta
 ### Customer Accounts
 
 With `accounts` configured, customers can register, sign in and reset a forgotten password by email. Passwords are at least 10 characters and stored as `Bun.password` hashes. A session is a random token in an HttpOnly cookie, stored only as a hash, valid for 30 days and ended by signing out or by setting a new password. Five failed sign-ins for an email from one address within 15 minutes block that address until the window passes or the password is reset; the count is kept in memory per process. A reset link is valid for one hour and works once, and asking for one answers the same for any email. An order placed while signed in belongs to the account, and checkout without an account keeps working.
+
+### Storefront Preset
+
+With `storefront` in the config, the package owns the whole storefront: the catalog with category filters and paging, product pages, the cart, checkout, order pages with payment and invoices, the customer account and password reset. `eshopStorefront(config)` from `@trebired/e-shop/react` returns:
+
+- `pages(route)`: the page for a storefront address, ready for `createSitePages` from `@trebired/frontend`; any other address returns `undefined` and stays the app's.
+- `paths`: every storefront page to build, with `_` in place of a product slug or order token.
+- `Provider`: one cart and copy for the whole site, so a header and a page share the cart.
+- `CartLink`: a link to the cart with the number of items.
+- `href(page, param)`: a link to any storefront page.
+
+`createEshop({ storefrontDir })` serves the built page for every storefront address, so a product or order page works at its own address without app code. Routes, the catalog page size and the category filter are set in `storefront`; `slots` adds the app's own content before or after any page.
+
+```tsx
+const storefront = eshopStorefront(eshopConfig, { slots: { checkout: { before: ShippingNote } } });
+const sitePages = createSitePages({ error: ErrorPage, pages: (route) => storefront.pages(route) ?? appPages(route) });
+```
 
 ### Storefront
 
@@ -86,7 +103,7 @@ With `accounts` configured, customers can register, sign in and reset a forgotte
 import { defineConfig } from "@trebired/e-shop/config";
 
 export default defineConfig({
-  forVersion: "0.5.0",
+  forVersion: "0.6.0",
   shop: { name: "Example", currency: "CZK", locales: ["cs", "en"] },
   vat: { defaultRate: 21 },
   shipping: [
@@ -95,7 +112,8 @@ export default defineConfig({
     { id: "packeta", kind: "packeta", label: { cs: "Zásilkovna", en: "Packeta" }, priceMinor: 7900 },
   ],
   packeta: { apiKey: "public widget key", sender: "example-eshop" },
-  accounts: { resetPath: "/account/reset/{token}" },
+  accounts: {},
+  storefront: { catalog: { pageSize: 24 }, routes: { product: "/products/{slug}" } },
   invoices: {
     supplier: {
       name: "Example s.r.o.", street: "Údolní 1", postalCode: "602 00", city: "Brno", country: "Česká republika",
@@ -108,6 +126,7 @@ export default defineConfig({
     stripe: { enabled: true },
     gopay: { goid: "8123456789", sandbox: true },
     comgate: { merchant: "123456", test: true },
+    btcpay: { serverUrl: "https://btcpay.example", storeId: "store id" },
   },
   mail: { from: "shop@example.cz", operator: "orders@example.cz" },
   orders: { statusPath: "/order/{token}" },
@@ -124,6 +143,7 @@ Gateway credentials never go in the config file. Each gateway enabled in `paymen
 
 - `stripe`: `secretKey` and `webhookSecret`. Point a Stripe webhook for `checkout.session.*` events at `<publicUrl>/eshop/api/payments/stripe/notify`.
 - `gopay`: `clientId` and `clientSecret`. `goid` and `sandbox` stay in the config.
+- `btcpay`: `apiKey` and `webhookSecret`. Create a store webhook in BTCPay Server for invoice events pointing at `<publicUrl>/eshop/api/payments/btcpay/notify`.
 - `comgate`: `secret`. `merchant` and `test` stay in the config. Set the push address in the Comgate portal to `<publicUrl>/eshop/api/payments/comgate/notify`.
 
 A `packeta` shipping method needs `createEshop({ packeta: { apiPassword } })`, the secret Packeta API password, or `createEshop` throws. `packeta.sender` is the sender label set up in the Packeta client section.

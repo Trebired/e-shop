@@ -56,6 +56,7 @@ function availablePaymentMethods(config: NormalizedEshopConfig): PaymentMethodKi
     ["stripe", Boolean(payments.stripe)],
     ["gopay", Boolean(payments.gopay)],
     ["comgate", Boolean(payments.comgate)],
+    ["btcpay", Boolean(payments.btcpay)],
   ];
   return enabled.filter(([, on]) => on).map(([kind]) => kind);
 }

@@ -19,6 +19,7 @@ const COPY: Record<string, InvoiceCopy> = {
     item: "Položka",
     methods: {
       bank_transfer: "Bankovní převod",
+      btcpay: "Bitcoin",
       comgate: "Platba kartou (Comgate)",
       gopay: "Platba kartou (GoPay)",
       stripe: "Platba kartou (Stripe)",
@@ -50,7 +51,7 @@ const COPY: Record<string, InvoiceCopy> = {
     invoiceVat: "Invoice · tax document",
     issuedAt: "Issue date",
     item: "Item",
-    methods: { bank_transfer: "Bank transfer", comgate: "Card (Comgate)", gopay: "Card (GoPay)", stripe: "Card (Stripe)" },
+    methods: { bank_transfer: "Bank transfer", btcpay: "Bitcoin", comgate: "Card (Comgate)", gopay: "Card (GoPay)", stripe: "Card (Stripe)" },
     notVatPayer: "Not a VAT payer",
     order: "Order",
     original: "Corrects document",
