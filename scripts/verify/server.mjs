@@ -13,7 +13,7 @@ const TOKEN = crypto.randomBytes(32).toString("hex");
 const DATABASE_URL = process.env.TEST_DATABASE_URL;
 
 const CONFIG = {
-  forVersion: "0.4.0",
+  forVersion: "0.5.0",
   payments: { bankTransfer: { accountName: "Verify s.r.o.", iban: "CZ6508000000192000145399" } },
   shipping: [
     { id: "pickup", kind: "pickup", label: { cs: "Osobní odběr", en: "Pickup" }, priceMinor: 0 },
@@ -144,7 +144,7 @@ async function verifyServer() {
   const pool = new pg.Pool({ connectionString: DATABASE_URL, max: 8 });
   await resetDatabase(pool);
   const eshop = server.createEshop({ adminToken: TOKEN, config: CONFIG, pool });
-  const migrations = ["eshop_001_core", "eshop_002_payment_reference", "eshop_003_invoices"];
+  const migrations = ["eshop_001_core", "eshop_002_payment_reference", "eshop_003_invoices", "eshop_004_accounts"];
   assert.deepEqual(await eshop.migrate(), migrations, "the first run applies the schema");
   assert.deepEqual(await eshop.migrate(), [], "a second run applies nothing");
   const { server: http0, url } = await listen((req, res) => eshop.handle(req, res));

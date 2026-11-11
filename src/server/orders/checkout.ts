@@ -67,11 +67,11 @@ async function paymentFor(config: NormalizedEshopConfig, method: string, order: 
 async function insertOrder(db: Db, values: any): Promise<string> {
   const row = await db.one<{id:string}>(
     `insert into eshop_orders (number, token, status, currency, locale, contact, billing_address, shipping_address, shipping, payment, totals,
-    total_minor, note) values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13) returning id`,
+    total_minor, note, customer_id) values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14) returning id`,
     [
       values.number, values.token, "pending_payment", values.currency, values.locale, JSON.stringify(values.contact),
       JSON.stringify(values.billing), JSON.stringify(values.shippingAddress), JSON.stringify(values.shipping),
-      JSON.stringify(values.payment), JSON.stringify(values.totals), values.totals.totalMinor, values.note,
+      JSON.stringify(values.payment), JSON.stringify(values.totals), values.totals.totalMinor, values.note, values.customerId,
     ],
   );
   return row?.id as string;
@@ -88,7 +88,7 @@ async function insertLines(db: Db, orderId: string, cart: Cart): Promise<void> {
   }
 }
 
-async function placeOrder(db: Db, config: NormalizedEshopConfig, cartToken: string, input: any): Promise<Order> {
+async function placeOrder(db: Db, config: NormalizedEshopConfig, cartToken: string, input: any, customerId: string | null = null): Promise<Order> {
   const contact = contactOf(input?.contact);
   const billing = addressOf(input?.billingAddress, "billingAddress");
   const shippingAddress = input?.shippingAddress ? addressOf(input.shippingAddress, "shippingAddress") : billing;
@@ -106,7 +106,7 @@ async function placeOrder(db: Db, config: NormalizedEshopConfig, cartToken: stri
           input?.note,
           "note",
           2000
-        ), number: orderNumber, payment, shipping, shippingAddress, token, totals };
+        ), customerId, number: orderNumber, payment, shipping, shippingAddress, token, totals };
       const orderId = await insertOrder(tx, values);
       await insertLines(tx, orderId, cart);
       await recordEvent(tx, orderId, { actor: "customer", kind: "created" });

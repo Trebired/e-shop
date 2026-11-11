@@ -4,6 +4,7 @@ import { getProduct, listProducts } from "./catalog/products.js";
 import { ensureCart, readCart, setCartItem } from "./cart.js";
 import type { EshopContext } from "./context.js";
 import { createRouter, readCookie, sendPdf, setCookie, type RouteContext } from "./http.js";
+import { accountRoutes, currentCustomer } from "./accounts/routes.js";
 import { startPayment } from "./gateways/flow.js";
 import { gatewayRoutes } from "./gateways/routes.js";
 import { afterOrderChange } from "./lifecycle.js";
@@ -55,7 +56,8 @@ function cartRoutes(context: EshopContext, router: ReturnType<typeof createRoute
 
 function checkoutRoutes(context: EshopContext, router: ReturnType<typeof createRouter>): void {
   router.add("POST", "/checkout", async(route) => {
-      const order = await placeOrder(context.db, context.config, await cartToken(context, route), await route.json());
+      const customer = context.config.accounts ? await currentCustomer(context, route) : null;
+      const order = await placeOrder(context.db, context.config, await cartToken(context, route), await route.json(), customer?.id ?? null);
       await afterOrderChange(context, order, "created");
       if (!context.gateways[order.payment.method as keyof typeof context.gateways]) return { order };
       return { order: await startPayment(context, order).catch (() => order) };
@@ -77,6 +79,7 @@ function storefrontRouter(context: EshopContext) {
   cartRoutes(context, router);
   checkoutRoutes(context, router);
   gatewayRoutes(context, router);
+  accountRoutes(context, router);
   return router;
 }
 

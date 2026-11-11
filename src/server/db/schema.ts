@@ -114,10 +114,34 @@ const INVOICES_V3 = [
   "create index eshop_invoices_order on eshop_invoices (order_id, issued_at)",
 ];
 
+const ACCOUNTS_V4 = [
+  `create table eshop_customers (
+  id uuid primary key default gen_random_uuid(),
+  email text not null unique,
+  name text not null,
+  password_hash text not null,
+  created_at timestamptz not null default now()
+  )`,
+  `create table eshop_customer_sessions (
+  token_hash text primary key,
+  customer_id uuid not null references eshop_customers(id) on delete cascade,
+  expires_at timestamptz not null
+  )`,
+  "create index eshop_customer_sessions_customer on eshop_customer_sessions (customer_id)",
+  `create table eshop_password_resets (
+  token_hash text primary key,
+  customer_id uuid not null references eshop_customers(id) on delete cascade,
+  expires_at timestamptz not null
+  )`,
+  "alter table eshop_orders add column customer_id uuid references eshop_customers(id) on delete set null",
+  "create index eshop_orders_customer on eshop_orders (customer_id, created_at desc)",
+];
+
 const MIGRATIONS = [
   { id: "eshop_001_core", statements: SCHEMA_V1 },
   { id: "eshop_002_payment_reference", statements: PAYMENTS_V2 },
   { id: "eshop_003_invoices", statements: INVOICES_V3 },
+  { id: "eshop_004_accounts", statements: ACCOUNTS_V4 },
 ];
 
 export { MIGRATIONS };

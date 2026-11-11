@@ -111,12 +111,15 @@ type Invoice = {
 };
 type InvoiceSummary = { issuedAt: string; kind: InvoiceKind; number: string; totalMinor: number };
 
+type Customer = { createdAt: string; email: string; id: string; name: string; orders?: number };
+
 type Order = {
   billingAddress: Address;
   cancelledAt: string | null;
   contact: Contact;
   createdAt: string;
   currency: string;
+  customerId: string | null;
   deliveredAt: string | null;
   id: string;
   lines: OrderLine[];
@@ -137,6 +140,7 @@ type Order = {
 type OrderEvent = { actor: string; createdAt: string; data: Record<string, unknown>; kind: string };
 
 export type {
+  Customer,
   Invoice,
   InvoiceKind,
   InvoiceLine,

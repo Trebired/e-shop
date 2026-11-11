@@ -1,3 +1,4 @@
+export { AccountView, ForgotPasswordForm, LoginForm, RegisterForm, ResetPasswordForm, useAccount } from "./account.js";
 export { CartView } from "./cart.js";
 export { CheckoutForm } from "./checkout.js";
 export { EshopProvider, useStorefront } from "./context.js";

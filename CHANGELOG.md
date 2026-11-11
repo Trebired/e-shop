@@ -4,6 +4,15 @@ All notable changes to `@trebired/e-shop` will be documented here.
 
 This project follows semantic versioning once published.
 
+## 0.5.0
+
+- Added customer accounts: registration, sign-in with an HttpOnly session cookie, sign-out and password reset by email. Failed sign-ins are throttled per email and address.
+- Orders placed while signed in belong to the account, and `GET /account` lists them. Checkout without an account is unchanged.
+- Added `GET /customers` and `GET /customers/:id` to the admin API, with `customers()` and `customer()` on the admin client.
+- Added `AccountView`, `LoginForm`, `RegisterForm`, `ForgotPasswordForm`, `ResetPasswordForm` and `useAccount` to the storefront.
+- Several cookies set in one response no longer replace each other.
+- Added the `accounts` config and the `eshop_004_accounts` migration.
+
 ## 0.4.0
 
 - Added Czech invoices and credit notes. Paying an order issues its invoice and attaches the PDF to the paid email; refunding it, or cancelling it after payment, issues a credit note.

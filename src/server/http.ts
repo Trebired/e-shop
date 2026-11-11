@@ -115,7 +115,9 @@ function readCookie(req: Request, name: string): string {
 function setCookie(res: Response, name: string, value: string, maxAgeDays: number, secure: boolean): void {
   const parts = [`${name}=${encodeURIComponent(value)}`, "Path=/", "HttpOnly", "SameSite=Lax", `Max-Age=${maxAgeDays * 86400}`];
   if (secure) parts.push("Secure");
-  res.setHeader("set-cookie", parts.join("; "));
+  const current = res.getHeader?.("set-cookie");
+  const list = Array.isArray(current) ? current : current ? [String(current)] : [];
+  res.setHeader("set-cookie", [...list.filter((cookie: string) => !cookie.startsWith(`${name}=`)), parts.join("; ")]);
 }
 
 export { createRouter, dispatch, readCookie, sendJson, sendPdf, setCookie };

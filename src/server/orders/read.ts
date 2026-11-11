@@ -15,6 +15,7 @@ function toOrder(row: any, lines: any[]): Order {
     contact: row.contact,
     createdAt: iso(row.created_at) as string,
     currency: row.currency,
+    customerId: row.customer_id ?? null,
     deliveredAt: iso(row.delivered_at),
     id: row.id,
     lines: lines.map((line) => ({

@@ -6,6 +6,8 @@ type MailCopy = {
   operator: string;
   paid: string;
   payBy: string;
+  reset: string;
+  resetBody: string;
   shipped: string;
   shipping: string;
   status: string;
@@ -22,6 +24,8 @@ const COPY: Record<string, MailCopy> = {
     operator: "Nová objednávka {{number}}",
     paid: "Platba za objednávku {{number}} přijata",
     payBy: "Zaplaťte {{amount}} na účet {{iban}} s variabilním symbolem {{vs}} do {{due}}.",
+    reset: "Obnova hesla",
+    resetBody: "Nové heslo nastavíte na této adrese do jedné hodiny: {{url}}\nPokud jste o obnovu nežádali, e-mail ignorujte.",
     shipped: "Objednávka {{number}} je na cestě",
     shipping: "Doprava: {{label}} ({{price}})",
     status: "Stav objednávky: {{url}}",
@@ -36,6 +40,8 @@ const COPY: Record<string, MailCopy> = {
     operator: "New order {{number}}",
     paid: "Payment for order {{number}} received",
     payBy: "Pay {{amount}} to account {{iban}} with variable symbol {{vs}} by {{due}}.",
+    reset: "Password reset",
+    resetBody: "Set a new password at this address within one hour: {{url}}\nIf you did not ask for it, ignore this email.",
     shipped: "Order {{number}} is on its way",
     shipping: "Shipping: {{label}} ({{price}})",
     status: "Order status: {{url}}",

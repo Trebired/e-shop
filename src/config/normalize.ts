@@ -115,6 +115,7 @@ function normalizeConfig(config: EshopConfig, options: { configPath?: string; re
         requireForVersion: options.requireForVersion,
     }),
     mail: { from: String(config.mail?.from ??""), operator: String(config.mail?.operator ?? "") },
+    accounts: config.accounts ? { resetPath: String(config.accounts.resetPath ?? "/account/reset/{token}") } : null,
     invoices: normalizeInvoices(config.invoices),
     orders: { statusPath: String(config.orders?.statusPath ?? "/order/{token}") },
     packeta: normalizePacketa(config, shipping),

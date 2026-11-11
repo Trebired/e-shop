@@ -37,6 +37,7 @@ type EshopConfig = {
   cart?: { cookie?: string; ttlDays?: number };
   forVersion?: string;
   mail?: { from?: string; operator?: string };
+  accounts?: { resetPath?: string };
   invoices?: InvoicesConfig;
   orders?: { statusPath?: string };
   packeta?: PacketaConfig;
@@ -51,6 +52,7 @@ type NormalizedEshopConfig = {
   cart: { cookie: string; ttlDays: number };
   forVersion: string;
   mail: { from: string; operator: string };
+  accounts: { resetPath: string } | null;
   invoices: { supplier: Required<InvoiceSupplier> } | null;
   orders: { statusPath: string };
   packeta: PacketaConfig | null;

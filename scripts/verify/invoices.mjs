@@ -1,11 +1,10 @@
 import assert from "node:assert/strict";
 import crypto from "node:crypto";
-import net from "node:net";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import pg from "pg";
 import { resolveLogger } from "@package/logger-adapter";
-import { call, listen, resetDatabase } from "./shared.mjs";
+import { call, listen, resetDatabase, smtpSink } from "./shared.mjs";
 
 const log = resolveLogger({ source: "@trebired/e-shop" });
 const rootDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "..");
@@ -27,7 +26,7 @@ const SUPPLIER = {
 };
 
 const CONFIG = {
-  forVersion: "0.4.0",
+  forVersion: "0.5.0",
   invoices: { supplier: SUPPLIER },
   mail: { from: "shop@verify.test" },
   payments: { bankTransfer: { accountName: "Verify s.r.o.", iban: "CZ6508000000192000145399" } },
@@ -35,38 +34,6 @@ const CONFIG = {
   shop: { locales: ["cs", "en"], name: "Verify Shop" },
   vat: { defaultRate: 21 },
 };
-
-function smtpSink(messages) {
-  return new Promise((resolve) => {
-      const server = net.createServer((socket) => {
-          let data = false;
-          let buffer = "";
-          socket.write("220 verify\r\n");
-          socket.on("data", (chunk) => {
-              buffer += chunk.toString("utf8");
-              if (data) {
-                if (!buffer.endsWith("\r\n.\r\n")) return;
-                messages.push(buffer);
-                buffer = "";
-                data = false;
-                return socket.write("250 queued\r\n");
-              }
-              const lines = buffer.split("\r\n");
-              buffer = lines.pop() ?? "";
-              for (const line of lines) {
-                const verb = line.slice(0, 4).toUpperCase();
-                if (verb === "EHLO") socket.write("250-verify\r\n250 OK\r\n");
-                else if (verb === "DATA") {
-                  data = true;
-                  socket.write("354 go\r\n");
-                } else if (verb === "QUIT") socket.end("221 bye\r\n");
-                else socket.write("250 OK\r\n");
-              }
-          });
-      });
-      server.listen(0, "127.0.0.1", () => resolve({ port: server.address().port, server }));
-  });
-}
 
 async function placeOrder(shop, variantId) {
   const cart = await call(shop, "POST", "/eshop/api/cart/items", { quantity: 2, variantId });

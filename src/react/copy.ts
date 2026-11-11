@@ -1,9 +1,10 @@
-type StorefrontCopy = { paymentMethods: Record<string, string> } &Record<
+type StorefrontCopy = { accountErrors: Record<string, string>; paymentMethods: Record<string, string> } &Record<
 "accountName" | "add" | "added" | "address" | "cart" | "checkout" | "city" | "continue" | "email" | "empty" | "iban" | "name" | "note"
 |"orderPlaced" | "outOfStock" | "pay" | "payOnline" | "payment" | "paymentFailed"
 |"paymentWaiting" | "phone" | "placeOrder" | "postalCode" | "quantity" | "remove" | "shipping" | "status"
 |"street" | "subtotal" | "total" | "variant" | "variableSymbol" | "dueDate" | "free" | "pickupPoint" | "choosePickupPoint" | "track"
-|"invoice" | "creditNote" | "error",
+|"invoice" | "creditNote" | "error" | "login" | "register" | "logout" | "password" | "newPassword" | "forgot" | "sendReset"
+|"resetSent" | "setPassword" | "resetDone" | "signedInAs" | "myOrders" | "noOrders",
 string
 >;
 
@@ -12,6 +13,28 @@ const COPY: Record<string, StorefrontCopy> = {
     choosePickupPoint: "Vybrat výdejní místo",
     track: "Sledovat zásilku",
     invoice: "Faktura",
+    accountErrors: {
+      "eshop-email-invalid": "Zadejte platný e-mail.",
+      "eshop-email-taken": "Účet s tímto e-mailem už existuje.",
+      "eshop-login-invalid": "E-mail nebo heslo nesouhlasí.",
+      "eshop-login-throttled": "Příliš mnoho pokusů. Zkuste to za chvíli.",
+      "eshop-name-required": "Zadejte jméno.",
+      "eshop-password-weak": "Heslo musí mít aspoň 10 znaků.",
+      "eshop-reset-invalid": "Odkaz pro obnovu hesla neplatí. Požádejte o nový.",
+    },
+    forgot: "Zapomenuté heslo",
+    login: "Přihlásit se",
+    logout: "Odhlásit se",
+    myOrders: "Moje objednávky",
+    newPassword: "Nové heslo",
+    noOrders: "Zatím žádné objednávky.",
+    password: "Heslo",
+    register: "Vytvořit účet",
+    resetDone: "Heslo je nastavené. Můžete se přihlásit.",
+    resetSent: "Pokud účet existuje, poslali jsme na e-mail odkaz pro nové heslo.",
+    sendReset: "Poslat odkaz",
+    setPassword: "Nastavit heslo",
+    signedInAs: "Přihlášeni jako {{name}}",
     creditNote: "Opravný doklad",
     paymentMethods: { bank_transfer: "Bankovní převod", comgate: "Platba kartou (Comgate)", gopay: "Platba kartou (GoPay)", stripe: "Platba kartou" },
     accountName: "Majitel účtu", add: "Přidat do košíku", added: "Přidáno do košíku", address: "Fakturační adresa", cart: "Košík",
@@ -28,6 +51,28 @@ const COPY: Record<string, StorefrontCopy> = {
     choosePickupPoint: "Choose a pickup point",
     track: "Track the parcel",
     invoice: "Invoice",
+    accountErrors: {
+      "eshop-email-invalid": "Enter a valid email.",
+      "eshop-email-taken": "An account with this email already exists.",
+      "eshop-login-invalid": "The email or password does not match.",
+      "eshop-login-throttled": "Too many attempts. Try again in a while.",
+      "eshop-name-required": "Enter your name.",
+      "eshop-password-weak": "The password needs at least 10 characters.",
+      "eshop-reset-invalid": "The reset link is no longer valid. Ask for a new one.",
+    },
+    forgot: "Forgotten password",
+    login: "Sign in",
+    logout: "Sign out",
+    myOrders: "My orders",
+    newPassword: "New password",
+    noOrders: "No orders yet.",
+    password: "Password",
+    register: "Create an account",
+    resetDone: "Your password is set. You can sign in.",
+    resetSent: "If the account exists, we sent a link to set a new password.",
+    sendReset: "Send the link",
+    setPassword: "Set the password",
+    signedInAs: "Signed in as {{name}}",
     creditNote: "Credit note",
     paymentMethods: { bank_transfer: "Bank transfer", comgate: "Card (Comgate)", gopay: "Card (GoPay)", stripe: "Card" },
     accountName: "Account holder", add: "Add to cart", added: "Added to cart", address: "Billing address", cart: "Cart",

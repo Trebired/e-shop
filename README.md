@@ -1,6 +1,6 @@
 # @trebired/e-shop
 
-Postgres-backed e-shop for Bun apps: catalog with variants and stock, cart, checkout, orders with a status history, Czech bank transfer payments with a QR code, card payments through Stripe, GoPay and Comgate, Packeta pickup points with packet creation and labels, Czech invoices and credit notes as PDF, order email, a storefront structure for `@trebired/frontend`, and a signed admin API that is always on.
+Postgres-backed e-shop for Bun apps: catalog with variants and stock, cart, checkout, orders with a status history, Czech bank transfer payments with a QR code, card payments through Stripe, GoPay and Comgate, Packeta pickup points with packet creation and labels, Czech invoices and credit notes as PDF, customer accounts, order email, a storefront structure for `@trebired/frontend`, and a signed admin API that is always on.
 
 The package owns the shop schema, the order rules, the storefront and admin HTTP routes and the storefront components. The app owns its Postgres pool, its pages and their layout, its SMTP account, its public address, the admin token and its payment gateway accounts and credentials. The package does not own product photography storage, accounting, a customer marketing system or the admin interface itself; an admin application drives it through the admin API.
 
@@ -64,13 +64,17 @@ A `packeta` shipping method makes checkout ask for a pickup point. The storefron
 
 With `invoices.supplier` configured, paying an order issues its invoice and attaches the PDF to the paid email. Refunding it, or cancelling it after payment, issues a credit note that reverses it. Invoices and credit notes are numbered per year in their own series (`2026000001`, `D2026000001`), and each keeps a frozen copy of the supplier, the customer, the lines and the VAT, so later changes to products or settings never alter an issued document. A VAT payer's invoice is a tax document with the date of taxable supply and a VAT summary; otherwise it states that the supplier is not a VAT payer. The PDF is rendered on request with an embedded Noto Sans subset under the SIL Open Font License, shipped in `assets/fonts`.
 
+### Customer Accounts
+
+With `accounts` configured, customers can register, sign in and reset a forgotten password by email. Passwords are at least 10 characters and stored as `Bun.password` hashes. A session is a random token in an HttpOnly cookie, stored only as a hash, valid for 30 days and ended by signing out or by setting a new password. Five failed sign-ins for an email from one address within 15 minutes block that address until the window passes or the password is reset; the count is kept in memory per process. A reset link is valid for one hour and works once, and asking for one answers the same for any email. An order placed while signed in belongs to the account, and checkout without an account keeps working.
+
 ### Storefront
 
-`@trebired/e-shop/react` gives the pieces a shop page is built from: `EshopProvider`, `ProductGrid`, `ProductCard`, `ProductDetail`, `CartView`, `CheckoutForm` and `OrderStatus`, plus `useCatalog`, `useProduct` and `useOrder`. They render `@trebired/frontend` primitives and namespace classes, ship Czech and English text, and leave layout and routing to the app.
+`@trebired/e-shop/react` gives the pieces a shop page is built from: `EshopProvider`, `ProductGrid`, `ProductCard`, `ProductDetail`, `CartView`, `CheckoutForm`, `OrderStatus`, `AccountView`, `LoginForm`, `RegisterForm`, `ForgotPasswordForm` and `ResetPasswordForm`, plus `useCatalog`, `useProduct`, `useOrder` and `useAccount`. They render `@trebired/frontend` primitives and namespace classes, ship Czech and English text, and leave layout and routing to the app.
 
 ### Admin API
 
-`/eshop/admin/api/v1` covers statistics, products, variants, stock, categories, orders, invoices and Packeta packets and labels. `GET /products/:id` accepts a product slug in place of its id. Every request carries `x-eshop-timestamp` and `x-eshop-signature`, an HMAC-SHA256 over the timestamp, method, path and body hash with the admin token. A request older than five minutes, signed with another token, or replayed is refused. The API is mounted whenever the shop is, and no option turns it off. `createEshopAdminClient` from `@trebired/e-shop/client` signs requests for an admin application.
+`/eshop/admin/api/v1` covers statistics, products, variants, stock, categories, orders, customers, invoices and Packeta packets and labels. `GET /products/:id` accepts a product slug in place of its id. Every request carries `x-eshop-timestamp` and `x-eshop-signature`, an HMAC-SHA256 over the timestamp, method, path and body hash with the admin token. A request older than five minutes, signed with another token, or replayed is refused. The API is mounted whenever the shop is, and no option turns it off. `createEshopAdminClient` from `@trebired/e-shop/client` signs requests for an admin application.
 
 ## Configuration
 
@@ -82,7 +86,7 @@ With `invoices.supplier` configured, paying an order issues its invoice and atta
 import { defineConfig } from "@trebired/e-shop/config";
 
 export default defineConfig({
-  forVersion: "0.4.0",
+  forVersion: "0.5.0",
   shop: { name: "Example", currency: "CZK", locales: ["cs", "en"] },
   vat: { defaultRate: 21 },
   shipping: [
@@ -91,6 +95,7 @@ export default defineConfig({
     { id: "packeta", kind: "packeta", label: { cs: "Zásilkovna", en: "Packeta" }, priceMinor: 7900 },
   ],
   packeta: { apiKey: "public widget key", sender: "example-eshop" },
+  accounts: { resetPath: "/account/reset/{token}" },
   invoices: {
     supplier: {
       name: "Example s.r.o.", street: "Údolní 1", postalCode: "602 00", city: "Brno", country: "Česká republika",
@@ -155,6 +160,7 @@ With `eventsUrl`, every order change is posted there as JSON, signed the same wa
 - `GET /eshop/api/cart`, `POST /eshop/api/cart/items`
 - `GET /eshop/api/checkout/options`, `POST /eshop/api/checkout`
 - `GET /eshop/api/orders/:token/invoices/:number` returns the invoice or credit note PDF
+- `GET /eshop/api/account`, `POST /eshop/api/account/register`, `/login`, `/logout`, `/password/forgot`, `/password/reset`
 - `GET /eshop/api/orders/:token`, `POST /eshop/api/orders/:token/pay`, `POST /eshop/api/orders/:token/refresh`
 - `POST` and `GET /eshop/api/payments/:gateway/notify`, `GET /eshop/api/payments/:gateway/return`
 
@@ -164,7 +170,7 @@ POST routes accept only `application/json`, except the gateway notifications, wh
 
 This package does not:
 
-- keep customer accounts in this release;
+- sign customers in through other identity providers;
 - send invoices to accounting software or report them to the tax office;
 - ship Packeta home delivery; Packeta covers pickup points and Z-BOXes;
 - store or resize product images; products refer to image URLs the app serves;

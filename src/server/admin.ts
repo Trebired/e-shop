@@ -7,6 +7,7 @@ import { deleteVariant, saveVariant, setStock } from "./catalog/variants.js";
 import type { EshopContext } from "./context.js";
 import { EshopError } from "./errors.js";
 import { refundThroughGateway } from "./gateways/flow.js";
+import { listCustomers, readCustomer } from "./accounts/admin.js";
 import { listInvoices, readInvoice } from "./invoices/issue.js";
 import { invoicePdf } from "./invoices/pdf.js";
 import { ensurePacket, packetLabel, prepareShipment } from "./packeta.js";
@@ -85,6 +86,8 @@ function orderAdmin(context: EshopContext, add: (method: string, path: string, h
       const order = await readOrder(context.db, { number: route.params.number });
       return { events: await orderEvents(context.db, order.id), invoices: await listInvoices(context.db, order.id), order };
   });
+  add("GET", "/customers", async(route) => await listCustomers(context.db, pageOf(route)));
+  add("GET", "/customers/:id", async(route) => await readCustomer(context.db, route.params.id as string));
   add("GET", "/invoices/:number", async(route) => {
       const invoice = await readInvoice(context.db, route.params.number as string);
       return { invoice, pdf: (await invoicePdf(invoice)).toString("base64") };
