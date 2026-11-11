@@ -58,6 +58,9 @@
       "#5vh6bfbx9gzd": [
         "../../../src/server/gateways/btcpay.ts"
       ],
+      "#6gnwqaazrpcz": [
+        "../../../src/config/paths.ts"
+      ],
       "#889fz2eni8jm": [
         "../../../src/server/cart.ts"
       ],
@@ -117,6 +120,9 @@
       ],
       "#fvzd9x5i1rad": [
         "../../../src/server/shipping.ts"
+      ],
+      "#fy3barpnmtdl": [
+        "../../../src/config/browser.ts"
       ],
       "#gjfaoukr41op": [
         "../../../src/server/gateways/comgate.ts"

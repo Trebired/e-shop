@@ -23,8 +23,8 @@ function Section(props: { children: ReactNode; page: StorefrontPage; title?: str
   const After = slots[props.page]?.after;
   return (
     <section className={classes("column", "gap-md")}>
-    {props.title ? <Title level={1}>{props.title}</Title> : null}
     {Before ? <Before /> : null}
+    {props.title ? <Title level={1}>{props.title}</Title> : null}
     {props.children}
     {After ? <After /> : null}
     </section>

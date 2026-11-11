@@ -47,6 +47,7 @@ function verifyRoutes() {
   assert.deepEqual(match("/"), { page: "catalog", param: "" }, "the catalog sits at the root by default");
   assert.equal(match("/products/a/b"), null, "a deeper address is not a product");
   assert.equal(match("/blog"), null, "other addresses belong to the app");
+  assert.equal(match("/products/hrnek.svg"), null, "a file under a storefront path is not a page");
   const custom = config.normalizeConfig({ ...SHOP, storefront: { routes: { catalog: "/shop", product: "/shop/p/{slug}" } } });
   assert.equal(root.storefrontPath(custom.storefront, "product", "hrnek"), "/shop/p/hrnek", "routes come from the config");
   assert.equal(custom.orders.statusPath, "/order/{token}", "order links follow the storefront order route");

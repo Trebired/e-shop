@@ -3,8 +3,7 @@ import path from "node:path";
 import { pathToFileURL } from "node:url";
 import { normalizeConfig } from "./normalize.js";
 import type { EshopConfig, LoadedEshopConfig } from "./types.js";
-
-const CONFIG_PATH = ".trebired/e-shop/config.ts";
+import { CONFIG_PATH } from "./paths.js";
 
 function findConfig(startDir: string): string | null {
   let current = path.resolve(startDir);

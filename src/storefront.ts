@@ -18,6 +18,7 @@ const STOREFRONT_ROUTES: StorefrontRoutes = {
 };
 const STOREFRONT_HOLE = "_";
 const PLACEHOLDER = /\{(slug|token)\}$/u;
+const PARAM = /^[A-Za-z0-9_-]{1,200}$/u;
 
 function trimmed(path: string): string {
   return path.replace(/\/+$/u, "") || "/";
@@ -34,7 +35,8 @@ function matchStorefrontRoute(settings: StorefrontSettings, pathname: string): S
     }
     const prefix = route.replace(PLACEHOLDER, "");
     const rest = path.startsWith(prefix) ? path.slice(prefix.length) : "";
-    if (rest && !rest.includes("/") && (!found || found.param === "")) found = { page, param: decodeURIComponent(rest) };
+    const param = rest ? decodeURIComponent(rest) : "";
+    if (PARAM.test(param) && (!found || found.param === "")) found = { page, param };
   }
   if (found?.param === STOREFRONT_HOLE) found.param = "";
   return found;

@@ -4,6 +4,14 @@ All notable changes to `@trebired/e-shop` will be documented here.
 
 This project follows semantic versioning once published.
 
+## 0.6.1
+
+- `@trebired/e-shop/config` has a browser build, so a storefront can import the shop config; `loadConfig` and `findConfig` there refuse to run.
+- A file under a storefront path, such as `/products/mug.svg`, is no longer taken for a storefront page.
+- `ProductDetail` places the image beside the name, price and buying controls, and stacks them on narrow screens.
+- A page's `before` slot comes above the page title, so an app can put its own introduction first.
+- `CartLink` carries no layout class of its own.
+
 ## 0.6.0
 
 - Added the storefront preset. With `storefront` in the config, `eshopStorefront(config)` provides every shop page: catalog with category filters and paging, product, cart, checkout, order, account and password reset. It also provides the page list for the build, a shared `Provider`, `CartLink`, `href()` and page slots for the app's own content.

@@ -40,4 +40,18 @@ for (const file of PACKED) {
   assert.ok(listing.includes(file), `${file} is packed`);
 }
 assert.ok(!listing.includes("src/"), "sources are not packed");
+
+function nodeImports(file, seen = new Set()) {
+  if (seen.has(file)) return [];
+  seen.add(file);
+  const source = fs.readFileSync(file, "utf8");
+  const specifiers = [...source.matchAll(/(?:import|export)[^"']*from\s*["']([^"']+)["']/gu)].map((match) => match[1]);
+  return specifiers.flatMap((specifier) => {
+      if (specifier.startsWith("node:")) return [`${path.relative(rootDir, file)} -> ${specifier}`];
+      return specifier.startsWith(".") ? nodeImports(path.resolve(path.dirname(file), specifier), seen) : [];
+  });
+}
+
+assert.equal(packageJson.exports["./config"].browser, "./dist/config/browser.js", "browsers get the config entry without file loading");
+assert.deepEqual(nodeImports(path.join(rootDir, "dist", "config", "browser.js")), [], "the browser config entry reaches no Node module");
 log.info("verify.pack", "e-shop pack verification passed");

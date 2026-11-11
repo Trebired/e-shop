@@ -2,7 +2,6 @@ import { useLocale } from "@trebired/frontend/react";
 import { useContext, type ComponentType, type ReactNode } from "react";
 import type { EshopConfig, NormalizedEshopConfig } from "./../../config/types.js";
 import { matchStorefrontRoute, storefrontPath, storefrontShellPaths } from "./../../storefront.js";
-import { classes } from "./../classes.js";
 import { EshopProvider, StorefrontContext, useStorefront } from "./../context.js";
 import { PRESET_PAGES } from "./pages.js";
 import { ScopeContext, storefrontScope, useStorefrontScope, type StorefrontScope, type StorefrontSlots } from "./settings.js";
@@ -19,7 +18,7 @@ function CartLinkView(props: { className?: string }) {
   const { settings } = useStorefrontScope();
   const count = cart?.lines.reduce((sum, line) => sum + line.quantity, 0) ?? 0;
   const label = count ? `${copy.cart} (${count})` : copy.cart;
-  return <a className={props.className ?? classes("inline-row", "gap-xs")} href={storefrontPath(settings, "cart")}>{label}</a>;
+  return <a className={props.className} href={storefrontPath(settings, "cart")}>{label}</a>;
 }
 
 function eshopStorefront(config: EshopConfig | NormalizedEshopConfig, options: { slots?: StorefrontSlots } = {}) {

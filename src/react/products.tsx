@@ -48,7 +48,7 @@ function VariantPicker(props: { onPick: (id: string) => void; value: string; var
   );
 }
 
-function ProductDetail(props: { currency: string; product: Product }) {
+function BuyBox(props: { currency: string; product: Product }) {
   const { copy, locale, setCartItem } = useStorefront();
   const variants = props.product.variants;
   const [variantId, setVariantId] = useState(variants[0]?.id ?? "");
@@ -64,15 +64,10 @@ function ProductDetail(props: { currency: string; product: Product }) {
       setMessage(copy.error);
     }
   };
-  const image = props.product.images[0];
-  const description = localized(props.product.description, locale);
   return (
-    <Stack gap="sm">
-    <Title level={1}>{localized(props.product.name, locale)}</Title>
-    {image ? <img alt={image.alt} className={classes("width-full")} src={image.src} /> : null}
-    {description ? <Text>{description}</Text> : null}
+    <>
     <VariantPicker onPick={setVariantId} value={variantId} variants={variants} />
-    {variant ? <Text as="strong">{formatMoney(variant.priceMinor, props.currency, locale)}</Text> : null}
+    {variant ? <Text as="strong" size="lg">{formatMoney(variant.priceMinor, props.currency, locale)}</Text> : null}
     {input({
           label: copy.quantity,
           min: 1,
@@ -83,7 +78,23 @@ function ProductDetail(props: { currency: string; product: Product }) {
     })}
     {button({ children: soldOut ? copy.outOfStock : copy.add, disabled: soldOut, onClick: () => void add(), variant: "primary" })}
     {message ? <Text muted size="sm">{message}</Text> : null}
+    </>
+  );
+}
+
+function ProductDetail(props: { currency: string; product: Product }) {
+  const { locale } = useStorefront();
+  const image = props.product.images[0];
+  const description = localized(props.product.description, locale);
+  return (
+    <div className={classes("grid", "auto-md", "gap-lg")}>
+    {image ? <img alt={image.alt} className={classes("width-full")} src={image.src} /> : null}
+    <Stack gap="sm">
+    <Title level={1}>{localized(props.product.name, locale)}</Title>
+    {description ? <Text>{description}</Text> : null}
+    <BuyBox currency={props.currency} product={props.product} />
     </Stack>
+    </div>
   );
 }
 
