@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "category": "package",
+  "subcategory": "runtime",
+  "status": "active",
+  "npm": "@trebired/e-shop",
+  "description": {
+    "en": "An e-shop for Bun apps with a storefront structure and a signed admin API.",
+    "cs": "E-shop pro aplikace na Bunu se strukturou obchodu a podepsaným administračním API."
+  }
+}

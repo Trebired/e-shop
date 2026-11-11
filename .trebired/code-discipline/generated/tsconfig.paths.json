@@ -1,0 +1,162 @@
+{
+  "compilerOptions": {
+    "paths": {
+      "#07l06n99peor": [
+        "../../../src/server/mail.ts"
+      ],
+      "#0bkgwtary10p": [
+        "../../../src/index.ts"
+      ],
+      "#0hwfgyjxfzq9": [
+        "../../../src/server/orders/transitions.ts"
+      ],
+      "#1z2mvy1yjhol": [
+        "../../../scripts/build/generated/tsconfig.mjs"
+      ],
+      "#3gxkudn38kc0": [
+        "../../../src/server/eshop.ts"
+      ],
+      "#3p7478pyj88y": [
+        "../../../scripts/verify/server.mjs"
+      ],
+      "#3pi1kc66udbf": [
+        "../../../src/types.ts"
+      ],
+      "#4kghf8rsudsk": [
+        "../../../src/server/catalog/variants.ts"
+      ],
+      "#4qf50veekcl7": [
+        "../../../src/react/cart.tsx"
+      ],
+      "#5ntdf7ap7et2": [
+        "../../../src/server/payments.ts"
+      ],
+      "#889fz2eni8jm": [
+        "../../../src/server/cart.ts"
+      ],
+      "#8ff5qp0y32bf": [
+        "../../../src/server/db/schema.ts"
+      ],
+      "#9vkhmxqn5mgi": [
+        "../../../src/server/catalog/categories.ts"
+      ],
+      "#auxefl96vrkd": [
+        "../../../src/config/load.ts"
+      ],
+      "#biu8in54c0j2": [
+        "../../../src/server/notify.ts"
+      ],
+      "#bsoowbnzpeer": [
+        "../../../src/react/checkout.tsx"
+      ],
+      "#cgh8ghmdpqyv": [
+        "../../../src/server/storefront.ts"
+      ],
+      "#co78ou1ny9ho": [
+        "../../../src/server/messages.ts"
+      ],
+      "#cof1a0mxfxme": [
+        "../../../src/config/index.ts"
+      ],
+      "#dbm6vu6isy35": [
+        "../../../src/react/index.ts"
+      ],
+      "#ectqc3zwnptx": [
+        "../../../src/react/api.ts"
+      ],
+      "#fis5vz0q967e": [
+        "../../../scripts/verify/pack.mjs"
+      ],
+      "#fsw9o9laxieh": [
+        "../../../src/server/signing.ts"
+      ],
+      "#fvzd9x5i1rad": [
+        "../../../src/server/shipping.ts"
+      ],
+      "#gkt70pnvnew9": [
+        "../../../src/server/input.ts"
+      ],
+      "#glq4ag8klqhl": [
+        "../../../src/react/copy.ts"
+      ],
+      "#h8b0g1149kxx": [
+        "../../../src/server/context.ts"
+      ],
+      "#hg46rogt5eb2": [
+        "../../../src/server/orders/read.ts"
+      ],
+      "#hqz7fhz6cj6x": [
+        "../../../src/client/index.ts"
+      ],
+      "#jhfp374gortq": [
+        "../../../src/version.ts"
+      ],
+      "#kew7b0jjtzhn": [
+        "../../../src/constants.ts"
+      ],
+      "#kjrydbw63ezg": [
+        "../../logger/config.ts"
+      ],
+      "#lchov68lqydp": [
+        "../../../src/server/db/database.ts"
+      ],
+      "#ml4smn7063hd": [
+        "../../../src/server/errors.ts"
+      ],
+      "#ndt1nb6cl69w": [
+        "../../../src/server/http.ts"
+      ],
+      "#nxt8mljcnfu6": [
+        "../../../src/config/normalize.ts"
+      ],
+      "#oq89ohf2w03j": [
+        "../../../scripts/prepare-dist.mjs"
+      ],
+      "#r19ha8r38ums": [
+        "../../../src/server/db/migrate.ts"
+      ],
+      "#rqmroeyoc2mq": [
+        "../../../src/server/index.ts"
+      ],
+      "#tjl2zg037sxb": [
+        "../../../src/server/admin.ts"
+      ],
+      "#tmbc9208bbb8": [
+        "../../../src/server/orders/checkout.ts"
+      ],
+      "#tzev3xsv39f2": [
+        "../../../src/react/order.tsx"
+      ],
+      "#u6ttewae4m3k": [
+        "../../../src/server/lifecycle.ts"
+      ],
+      "#u9vg1252w6pk": [
+        "../../../src/money.ts"
+      ],
+      "#ujt2rkr347fz": [
+        "../../../src/react/context.tsx"
+      ],
+      "#vgisrujesdj9": [
+        "../../../src/server/stats.ts"
+      ],
+      "#wpoi3f7topaa": [
+        "../../../scripts/verify/react.mjs"
+      ],
+      "#x5z08sajraov": [
+        "../../../src/react/classes.ts"
+      ],
+      "#xhha1se4cmb9": [
+        "../../../src/server/catalog/products.ts"
+      ],
+      "#xw6dc8nd5cya": [
+        "../../../src/react/products.tsx"
+      ],
+      "#xwsave29pmkf": [
+        "../../../src/react/hooks.ts"
+      ],
+      "#ynb749pqmou3": [
+        "../../../src/config/types.ts"
+      ]
+    }
+  }
+}

@@ -1,0 +1,68 @@
+import { availablePaymentMethods } from "./payments.js";
+import { listCategories } from "./catalog/categories.js";
+import { getProduct, listProducts } from "./catalog/products.js";
+import { ensureCart, readCart, setCartItem } from "./cart.js";
+import type { EshopContext } from "./context.js";
+import { createRouter, readCookie, setCookie, type RouteContext } from "./http.js";
+import { afterOrderChange } from "./lifecycle.js";
+import { placeOrder } from "./orders/checkout.js";
+import { readOrder } from "./orders/read.js";
+import { shippingOptions } from "./shipping.js";
+
+function cartToken(context: EshopContext, route: RouteContext): Promise<string> {
+  return ensureCart(context.db, readCookie(route.req, context.config.cart.cookie)).then((token) => {
+      const secure = String(route.req.headers?.["x-forwarded-proto"] ?? route.req.protocol ?? "").startsWith("https");
+      setCookie(route.res, context.config.cart.cookie, token, context.config.cart.ttlDays, secure);
+      return token;
+  });
+}
+
+function catalogRoutes(context: EshopContext, router: ReturnType<typeof createRouter>): void {
+  router.add("GET", "/catalog", async(route) => ({
+        categories: await listCategories(context.db),
+        ...(await listProducts(context.db, {
+              activeOnly: true,
+              limit: Number(route.query.get("limit") ?? 50),
+              offset: Number(route.query.get("offset") ?? 0),
+              q: route.query.get("q") ?? undefined,
+        })),
+  }));
+  router.add("GET", "/products/:slug", async(route) => ({ product: await getProduct(context.db, { slug: route.params.slug }, true) }));
+}
+
+function cartRoutes(context: EshopContext, router: ReturnType<typeof createRouter>): void {
+  const currency = context.config.shop.currency;
+  router.add("GET", "/cart", async(route) => ({ cart: await readCart(context.db, await cartToken(context, route), currency) }));
+  router.add("POST", "/cart/items", async(route) => {
+      const token = await cartToken(context, route);
+      await setCartItem(context.db, token, await route.json());
+      return { cart: await readCart(context.db, token, currency) };
+  });
+  router.add("GET", "/checkout/options", async(route) => {
+      const cart = await readCart(context.db, await cartToken(context, route), currency);
+      return {
+        locales: context.config.shop.locales,
+        payments: availablePaymentMethods(context.config),
+        shipping: shippingOptions(context.config, cart.subtotalMinor),
+      };
+  });
+}
+
+function checkoutRoutes(context: EshopContext, router: ReturnType<typeof createRouter>): void {
+  router.add("POST", "/checkout", async(route) => {
+      const order = await placeOrder(context.db, context.config, await cartToken(context, route), await route.json());
+      await afterOrderChange(context, order, "created");
+      return { order };
+  });
+  router.add("GET", "/orders/:token", async(route) => ({ order: await readOrder(context.db, { token: route.params.token }) }));
+}
+
+function storefrontRouter(context: EshopContext) {
+  const router = createRouter(`${context.config.basePath}/api`);
+  catalogRoutes(context, router);
+  cartRoutes(context, router);
+  checkoutRoutes(context, router);
+  return router;
+}
+
+export { storefrontRouter };
