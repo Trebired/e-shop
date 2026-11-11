@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import type { Category, Order, Product } from "./../types.js";
+import type { Category, InvoiceSummary, Order, Product } from "./../types.js";
 import { storefrontRequest } from "./api.js";
 import { useStorefront } from "./context.js";
 
@@ -32,7 +32,7 @@ function useProduct(slug: string) {
 }
 
 function useOrder(token: string) {
-  return useLoad<{order:Order}>(token ? `/orders/${encodeURIComponent(token)}` : null);
+  return useLoad<{invoices:InvoiceSummary[];order:Order}>(token ? `/orders/${encodeURIComponent(token)}` : null);
 }
 
 export { useCatalog, useOrder, useProduct };

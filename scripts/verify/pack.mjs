@@ -24,7 +24,18 @@ for (const subpath of ["", "client", "config", "server"]) await import(pathToFil
 
 const listing = execFileSync("bun", ["pm", "pack", "--dry-run"], { cwd: rootDir, encoding: "utf8" });
 
-for (const file of ["dist/index.js", "dist/server/index.js", "dist/react/index.js", "LICENSE", "README.md", "CHANGELOG.md"]) {
+const PACKED = [
+  "dist/index.js",
+  "dist/server/index.js",
+  "dist/react/index.js",
+  "assets/fonts/NotoSans-Regular.ttf",
+  "assets/fonts/NotoSans-Bold.ttf",
+  "assets/fonts/OFL.txt",
+  "LICENSE",
+  "README.md",
+  "CHANGELOG.md",
+];
+for (const file of PACKED) {
   assert.ok(listing.includes(file), `${file} is packed`);
 }
 assert.ok(!listing.includes("src/"), "sources are not packed");

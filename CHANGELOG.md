@@ -4,6 +4,14 @@ All notable changes to `@trebired/e-shop` will be documented here.
 
 This project follows semantic versioning once published.
 
+## 0.4.0
+
+- Added Czech invoices and credit notes. Paying an order issues its invoice and attaches the PDF to the paid email; refunding it, or cancelling it after payment, issues a credit note.
+- Invoices and credit notes are numbered per year in their own series and keep a frozen copy of the supplier, customer, lines and VAT.
+- Added the `invoices.supplier` config, `GET /orders/:token/invoices/:number` on the storefront, `GET /invoices/:number` on the admin API and `client.invoice()`. The order responses list the order's invoices, and the storefront order page links them.
+- The package ships a Noto Sans subset under the SIL Open Font License for the PDF.
+- Added the `eshop_003_invoices` migration.
+
 ## 0.3.0
 
 - Added Packeta pickup points. A `packeta` shipping method needs a pickup point at checkout, chosen in the Packeta widget that `CheckoutForm` opens.

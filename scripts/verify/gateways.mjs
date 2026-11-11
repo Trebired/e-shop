@@ -17,7 +17,7 @@ const COMGATE = { secret: "comgate-secret" };
 const MERCHANT = "123456";
 
 const CONFIG = {
-  forVersion: "0.3.0",
+  forVersion: "0.4.0",
   payments: {
     bankTransfer: { accountName: "Verify s.r.o.", iban: "CZ6508000000192000145399" },
     comgate: { merchant: MERCHANT, test: true },

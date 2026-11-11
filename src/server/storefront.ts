@@ -3,10 +3,12 @@ import { listCategories } from "./catalog/categories.js";
 import { getProduct, listProducts } from "./catalog/products.js";
 import { ensureCart, readCart, setCartItem } from "./cart.js";
 import type { EshopContext } from "./context.js";
-import { createRouter, readCookie, setCookie, type RouteContext } from "./http.js";
+import { createRouter, readCookie, sendPdf, setCookie, type RouteContext } from "./http.js";
 import { startPayment } from "./gateways/flow.js";
 import { gatewayRoutes } from "./gateways/routes.js";
 import { afterOrderChange } from "./lifecycle.js";
+import { listInvoices, readInvoice } from "./invoices/issue.js";
+import { invoicePdf } from "./invoices/pdf.js";
 import { placeOrder } from "./orders/checkout.js";
 import { readOrder } from "./orders/read.js";
 import { shippingOptions } from "./shipping.js";
@@ -58,7 +60,15 @@ function checkoutRoutes(context: EshopContext, router: ReturnType<typeof createR
       if (!context.gateways[order.payment.method as keyof typeof context.gateways]) return { order };
       return { order: await startPayment(context, order).catch (() => order) };
   });
-  router.add("GET", "/orders/:token", async(route) => ({ order: await readOrder(context.db, { token: route.params.token }) }));
+  router.add("GET", "/orders/:token", async(route) => {
+      const order = await readOrder(context.db, { token: route.params.token });
+      return { invoices: await listInvoices(context.db, order.id), order };
+  });
+  router.add("GET", "/orders/:token/invoices/:number", async(route) => {
+      const order = await readOrder(context.db, { token: route.params.token });
+      const invoice = await readInvoice(context.db, route.params.number as string, order.id);
+      sendPdf(route.res, `${invoice.number}.pdf`, await invoicePdf(invoice));
+  });
 }
 
 function storefrontRouter(context: EshopContext) {

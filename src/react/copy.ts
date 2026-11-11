@@ -2,7 +2,8 @@ type StorefrontCopy = { paymentMethods: Record<string, string> } &Record<
 "accountName" | "add" | "added" | "address" | "cart" | "checkout" | "city" | "continue" | "email" | "empty" | "iban" | "name" | "note"
 |"orderPlaced" | "outOfStock" | "pay" | "payOnline" | "payment" | "paymentFailed"
 |"paymentWaiting" | "phone" | "placeOrder" | "postalCode" | "quantity" | "remove" | "shipping" | "status"
-|"street" | "subtotal" | "total" | "variant" | "variableSymbol" | "dueDate" | "free" | "pickupPoint" | "choosePickupPoint" | "track" | "error",
+|"street" | "subtotal" | "total" | "variant" | "variableSymbol" | "dueDate" | "free" | "pickupPoint" | "choosePickupPoint" | "track"
+|"invoice" | "creditNote" | "error",
 string
 >;
 
@@ -10,6 +11,8 @@ const COPY: Record<string, StorefrontCopy> = {
   cs: {
     choosePickupPoint: "Vybrat výdejní místo",
     track: "Sledovat zásilku",
+    invoice: "Faktura",
+    creditNote: "Opravný doklad",
     paymentMethods: { bank_transfer: "Bankovní převod", comgate: "Platba kartou (Comgate)", gopay: "Platba kartou (GoPay)", stripe: "Platba kartou" },
     accountName: "Majitel účtu", add: "Přidat do košíku", added: "Přidáno do košíku", address: "Fakturační adresa", cart: "Košík",
     checkout: "Pokladna", city: "Město", continue: "Pokračovat v nákupu", dueDate: "Splatnost", email: "E-mail", empty: "Košík je prázdný.",
@@ -24,6 +27,8 @@ const COPY: Record<string, StorefrontCopy> = {
   en: {
     choosePickupPoint: "Choose a pickup point",
     track: "Track the parcel",
+    invoice: "Invoice",
+    creditNote: "Credit note",
     paymentMethods: { bank_transfer: "Bank transfer", comgate: "Card (Comgate)", gopay: "Card (GoPay)", stripe: "Card" },
     accountName: "Account holder", add: "Add to cart", added: "Added to cart", address: "Billing address", cart: "Cart",
     checkout: "Checkout", city: "City", continue: "Continue shopping", dueDate: "Due date", email: "Email", empty: "Your cart is empty.",

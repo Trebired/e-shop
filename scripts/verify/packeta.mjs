@@ -15,7 +15,7 @@ const PASSWORD = "packeta-api-password";
 const LABEL = Buffer.from("%PDF-1.4 verify label");
 
 const CONFIG = {
-  forVersion: "0.3.0",
+  forVersion: "0.4.0",
   packeta: { apiKey: "public-widget-key", sender: "verify-shop" },
   payments: { bankTransfer: { accountName: "Verify s.r.o.", iban: "CZ6508000000192000145399" } },
   shipping: [{ id: "packeta", kind: "packeta", label: { cs: "Zásilkovna", en: "Packeta" }, priceMinor: 7900 }],

@@ -7,6 +7,7 @@ import type {
   BankTransferConfig,
   EshopConfig,
   GatewaysConfig,
+  InvoicesConfig,
   NormalizedEshopConfig,
   NormalizedGateways,
   PacketaConfig,
@@ -75,6 +76,28 @@ function normalizePacketa(config: EshopConfig, shipping: Required<ShippingMethod
   return { apiKey, sender };
 }
 
+const SUPPLIER_TEXT = ["city", "companyId", "country", "name", "postalCode", "street"] as const;
+
+function normalizeInvoices(value: InvoicesConfig | undefined): NormalizedEshopConfig["invoices"] {
+  if (!value) return null;
+  const supplier = value.supplier;
+  for (const key of SUPPLIER_TEXT) if (!String(supplier?.[key] ?? "").trim()) throw invalid(`invoices.supplier.${key} is required`);
+  if (supplier.vatPayer && !String(supplier.vatId ?? "").trim()) throw invalid("invoices.supplier.vatId is required for a VAT payer");
+  return {
+    supplier: {
+      city: supplier.city.trim(),
+      companyId: supplier.companyId.trim(),
+      country: supplier.country.trim(),
+      name: supplier.name.trim(),
+      postalCode: supplier.postalCode.trim(),
+      registration: String(supplier.registration ?? "").trim(),
+      street: supplier.street.trim(),
+      vatId: String(supplier.vatId ?? "").trim(),
+      vatPayer: supplier.vatPayer === true,
+    },
+  };
+}
+
 function normalizeConfig(config: EshopConfig, options: { configPath?: string; requireForVersion?: boolean } = {}): NormalizedEshopConfig {
   if (!config || typeof config !== "object" || !config.shop?.name) throw invalid("shop.name is required");
   const locales = config.shop.locales?.length ? config.shop.locales : ["cs"];
@@ -92,6 +115,7 @@ function normalizeConfig(config: EshopConfig, options: { configPath?: string; re
         requireForVersion: options.requireForVersion,
     }),
     mail: { from: String(config.mail?.from ??""), operator: String(config.mail?.operator ?? "") },
+    invoices: normalizeInvoices(config.invoices),
     orders: { statusPath: String(config.orders?.statusPath ?? "/order/{token}") },
     packeta: normalizePacketa(config, shipping),
     payments: { bankTransfer: normalizeBank(config.payments?.bankTransfer), ...normalizeGateways(config.payments) },

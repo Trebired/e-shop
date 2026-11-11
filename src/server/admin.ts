@@ -7,6 +7,8 @@ import { deleteVariant, saveVariant, setStock } from "./catalog/variants.js";
 import type { EshopContext } from "./context.js";
 import { EshopError } from "./errors.js";
 import { refundThroughGateway } from "./gateways/flow.js";
+import { listInvoices, readInvoice } from "./invoices/issue.js";
+import { invoicePdf } from "./invoices/pdf.js";
 import { ensurePacket, packetLabel, prepareShipment } from "./packeta.js";
 import { createRouter, type RouteContext } from "./http.js";
 import { afterOrderChange } from "./lifecycle.js";
@@ -81,7 +83,11 @@ function orderAdmin(context: EshopContext, add: (method: string, path: string, h
   add("GET", "/orders", async(route) => await listOrders(context.db, { ...pageOf(route), status: (route.query.get("status") as any) ?? undefined }));
   add("GET", "/orders/:number", async(route) => {
       const order = await readOrder(context.db, { number: route.params.number });
-      return { events: await orderEvents(context.db, order.id), order };
+      return { events: await orderEvents(context.db, order.id), invoices: await listInvoices(context.db, order.id), order };
+  });
+  add("GET", "/invoices/:number", async(route) => {
+      const invoice = await readInvoice(context.db, route.params.number as string);
+      return { invoice, pdf: (await invoicePdf(invoice)).toString("base64") };
   });
   add("POST", "/orders/:number/packet", async(route) => ({ order: await ensurePacket(context, route.params.number as string) }));
   add("GET", "/orders/:number/packet/label", async(route) => ({

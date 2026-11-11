@@ -45,6 +45,14 @@ function sendJson(res: Response, status: number, data: unknown): void {
   res.end(JSON.stringify(data));
 }
 
+function sendPdf(res: Response, filename: string, pdf: Buffer): void {
+  res.statusCode = 200;
+  res.setHeader("content-type", "application/pdf");
+  res.setHeader("content-disposition", `inline; filename="${filename.replace(/[^\w.-]/gu, "_")}"`);
+  res.setHeader("cache-control", "private, no-store");
+  res.end(pdf);
+}
+
 function sendError(res: Response, error: unknown): void {
   if (error instanceof EshopError) return sendJson(res, error.status, { details: error.details, error: error.code });
   return sendJson(res, 500, { error: "eshop-internal-error" });
@@ -110,5 +118,5 @@ function setCookie(res: Response, name: string, value: string, maxAgeDays: numbe
   res.setHeader("set-cookie", parts.join("; "));
 }
 
-export { createRouter, dispatch, readCookie, sendJson, setCookie };
+export { createRouter, dispatch, readCookie, sendJson, sendPdf, setCookie };
 export type { RouteContext };

@@ -88,6 +88,29 @@ type OrderPayment = {
   status: PaymentStatus;
 };
 
+type InvoiceKind = "credit_note" | "invoice";
+type InvoiceLine = { name: string; quantity: number; totalMinor: number; unitPriceMinor: number; vatRate: number };
+type InvoiceParty = { address: string[]; companyId: string; name: string; registration: string; vatId: string };
+type Invoice = {
+  currency: string;
+  customer: { address: string[]; email: string; name: string };
+  issuedAt: string;
+  kind: InvoiceKind;
+  lines: InvoiceLine[];
+  locale: string;
+  number: string;
+  orderNumber: string;
+  originalNumber: string;
+  paymentMethod: PaymentMethodKind;
+  supplier: InvoiceParty;
+  taxableAt: string;
+  totalMinor: number;
+  variableSymbol: string;
+  vat: VatLine[];
+  vatPayer: boolean;
+};
+type InvoiceSummary = { issuedAt: string; kind: InvoiceKind; number: string; totalMinor: number };
+
 type Order = {
   billingAddress: Address;
   cancelledAt: string | null;
@@ -114,6 +137,11 @@ type Order = {
 type OrderEvent = { actor: string; createdAt: string; data: Record<string, unknown>; kind: string };
 
 export type {
+  Invoice,
+  InvoiceKind,
+  InvoiceLine,
+  InvoiceParty,
+  InvoiceSummary,
   Address,
   Cart,
   CartLine,

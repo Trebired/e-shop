@@ -4,7 +4,9 @@ import { formatMoney, localized } from "./../money.js";
 import type { Order } from "./../types.js";
 import { fill, mailCopy } from "./messages.js";
 
-type Mailer = { send: (message: { subject: string; text: string; to: string }) => Promise<boolean> };
+type MailAttachment = { content: Buffer; contentType: string; filename: string };
+type MailMessage = { attachments?: MailAttachment[]; subject: string; text: string; to: string };
+type Mailer = { send: (message: MailMessage) => Promise<boolean> };
 type MailKind = "cancelled" | "confirmation" | "paid" | "shipped";
 
 function createMailer(smtpUrl: string, from: string): Mailer {
@@ -13,7 +15,7 @@ function createMailer(smtpUrl: string, from: string): Mailer {
   return {
     send: async(message) => {
       try {
-        await transport.sendMail({ from, subject: message.subject, text: message.text, to: message.to });
+        await transport.sendMail({ attachments: message.attachments, from, subject: message.subject, text: message.text, to: message.to });
         return true;
       } catch {
         return false;
@@ -65,4 +67,4 @@ function operatorMail(config: NormalizedEshopConfig, order: Order) {
 }
 
 export { createMailer, customerMail, operatorMail };
-export type { MailKind, Mailer };
+export type { MailAttachment, MailKind, Mailer, MailMessage };

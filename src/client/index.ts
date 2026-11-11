@@ -1,6 +1,6 @@
 import { ADMIN_API_VERSION, SIGNATURE_HEADER, TIMESTAMP_HEADER } from "./../constants.js";
 import { signRequest } from "./../server/signing.js";
-import type { Category, Order, OrderEvent, Product, Variant } from "./../types.js";
+import type { Category, Invoice, InvoiceSummary, Order, OrderEvent, Product, Variant } from "./../types.js";
 
 type AdminClientOptions = { basePath?: string; baseUrl: string; timeoutMs?: number; token: string };
 type Page<T> = { items: T[]; total: number };
@@ -57,7 +57,8 @@ function createEshopAdminClient(options: AdminClientOptions) {
     categories: () => request<{categories:Category[]}>("GET", "/categories"),
     deleteProduct: (id: string) => request<{ok:true}>("DELETE", `/products/${encodeURIComponent(id)}`),
     info: () => request<{currency:string;locales:string[];name:string;payments:string[];version:string}>("GET", "/info"),
-    order: (number: string) => request<{events:OrderEvent[];order:Order}>("GET", `/orders/${encodeURIComponent(number)}`),
+    invoice: (number: string) => request<{invoice:Invoice;pdf:string}>("GET", `/invoices/${encodeURIComponent(number)}`),
+    order: (number: string) => request<{events:OrderEvent[];invoices:InvoiceSummary[];order:Order}>("GET", `/orders/${encodeURIComponent(number)}`),
     createPacket: (number: string) => request<{order:Order}>("POST", `/orders/${encodeURIComponent(number)}/packet`, {}),
     packetLabel: (number: string) => request<{pdf:string}>("GET", `/orders/${encodeURIComponent(number)}/packet/label`),
     orders: (query: ListQuery = {}) => request<Page<Order>>("GET", `/orders${queryString(query)}`),

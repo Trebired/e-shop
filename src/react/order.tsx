@@ -3,7 +3,7 @@ import { button, Stack, Text } from "@trebired/frontend/react";
 import { useEffect, useState } from "react";
 import { storefrontRequest } from "./api.js";
 import { formatMoney, localized } from "./../money.js";
-import type { Order } from "./../types.js";
+import type { InvoiceSummary, Order } from "./../types.js";
 import { useStorefront } from "./context.js";
 import { useOrder } from "./hooks.js";
 
@@ -51,7 +51,22 @@ function OnlinePayment(props: { order: Order }) {
   );
 }
 
-function OrderSummary(props: { order: Order }) {
+function Invoices(props: { invoices: InvoiceSummary[]; token: string }) {
+  const { basePath, copy } = useStorefront();
+  if (!props.invoices.length) return null;
+  const root = `${basePath.replace(/\/+$/u, "")}/api/orders/${encodeURIComponent(props.token)}/invoices`;
+  return (
+    <div className={classes("inline-row", "gap-sm", "wrap")}>
+    {props.invoices.map((invoice) => (
+          <a href={`${root}/${encodeURIComponent(invoice.number)}`} key={invoice.number} rel="noopener noreferrer" target="_blank">
+          {`${invoice.kind === "credit_note" ? copy.creditNote : copy.invoice} ${invoice.number}`}
+          </a>
+    ))}
+    </div>
+  );
+}
+
+function OrderSummary(props: { invoices?: InvoiceSummary[]; order: Order }) {
   const { copy, locale } = useStorefront();
   const { order } = props;
   const money = (minor: number) => formatMoney(minor, order.currency, locale);
@@ -73,6 +88,7 @@ function OrderSummary(props: { order: Order }) {
     <Text as="strong">{copy.total}: {money(order.totals.totalMinor)}</Text>
     <BankTransfer order={order} />
     <OnlinePayment order={order} />
+    <Invoices invoices={props.invoices ?? []} token={order.token} />
     </Stack>
   );
 }
@@ -81,7 +97,7 @@ function OrderStatus(props: { token: string }) {
   const { copy } = useStorefront();
   const loaded = useOrder(props.token);
   if (loaded.error) return <Text muted>{copy.error}</Text>;
-  return loaded.data ? <OrderSummary order={loaded.data.order} /> : null;
+  return loaded.data ? <OrderSummary invoices={loaded.data.invoices} order={loaded.data.order} /> : null;
 }
 
 export { OrderStatus, OrderSummary };

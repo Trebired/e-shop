@@ -101,9 +101,23 @@ const SCHEMA_V1 = [
 
 const PAYMENTS_V2 = ["create index eshop_orders_payment_reference on eshop_orders ((payment->>'method'), (payment->>'reference'))"];
 
+const INVOICES_V3 = [
+  `create table eshop_invoices (
+  id uuid primary key default gen_random_uuid(),
+  order_id uuid not null references eshop_orders(id) on delete restrict,
+  kind text not null,
+  number text not null unique,
+  issued_at timestamptz not null default now(),
+  data jsonb not null,
+  unique (order_id, kind)
+  )`,
+  "create index eshop_invoices_order on eshop_invoices (order_id, issued_at)",
+];
+
 const MIGRATIONS = [
   { id: "eshop_001_core", statements: SCHEMA_V1 },
   { id: "eshop_002_payment_reference", statements: PAYMENTS_V2 },
+  { id: "eshop_003_invoices", statements: INVOICES_V3 },
 ];
 
 export { MIGRATIONS };

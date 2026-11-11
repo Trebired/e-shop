@@ -12,6 +12,20 @@ type GatewaysConfig = {
 
 type PacketaConfig = { apiKey: string; sender: string };
 
+type InvoiceSupplier = {
+  city: string;
+  companyId: string;
+  country: string;
+  name: string;
+  postalCode: string;
+  registration?: string;
+  street: string;
+  vatId?: string;
+  vatPayer: boolean;
+};
+
+type InvoicesConfig = { supplier: InvoiceSupplier };
+
 type NormalizedGateways = {
   comgate: { merchant: string; test: boolean } | null;
   gopay: { goid: string; sandbox: boolean } | null;
@@ -23,6 +37,7 @@ type EshopConfig = {
   cart?: { cookie?: string; ttlDays?: number };
   forVersion?: string;
   mail?: { from?: string; operator?: string };
+  invoices?: InvoicesConfig;
   orders?: { statusPath?: string };
   packeta?: PacketaConfig;
   payments?: GatewaysConfig& { bankTransfer?: BankTransferConfig };
@@ -36,6 +51,7 @@ type NormalizedEshopConfig = {
   cart: { cookie: string; ttlDays: number };
   forVersion: string;
   mail: { from: string; operator: string };
+  invoices: { supplier: Required<InvoiceSupplier> } | null;
   orders: { statusPath: string };
   packeta: PacketaConfig | null;
   payments: NormalizedGateways& { bankTransfer: Required<BankTransferConfig>|null };
@@ -50,6 +66,8 @@ export type {
   BankTransferConfig,
   EshopConfig,
   GatewaysConfig,
+  InvoicesConfig,
+  InvoiceSupplier,
   LoadedEshopConfig,
   NormalizedEshopConfig,
   NormalizedGateways,
