@@ -1,4 +1,4 @@
-type StorefrontCopy = { accountErrors: Record<string, string>; paymentMethods: Record<string, string> } &Record<
+type StorefrontCopy = { accountErrors: Record<string, string>; paymentMethods: Record<string, string>; statuses: Record<string, string> } &Record<
 "accountName" | "add" | "added" | "address" | "cart" | "checkout" | "city" | "continue" | "email" | "empty" | "iban" | "name" | "note"
 |"orderPlaced" | "outOfStock" | "pay" | "payOnline" | "payment" | "paymentFailed"
 |"paymentWaiting" | "phone" | "placeOrder" | "postalCode" | "quantity" | "remove" | "shipping" | "status"
@@ -11,6 +11,15 @@ string
 const COPY: Record<string, StorefrontCopy> = {
   cs: {
     choosePickupPoint: "Vybrat výdejní místo",
+    statuses: {
+      cancelled: "Zrušená",
+      delivered: "Doručená",
+      paid: "Zaplacená",
+      pending_payment: "Čeká na platbu",
+      processing: "Vyřizuje se",
+      refunded: "Peníze vráceny",
+      shipped: "Odeslaná",
+    },
     track: "Sledovat zásilku",
     invoice: "Faktura",
     accountErrors: {
@@ -49,6 +58,15 @@ const COPY: Record<string, StorefrontCopy> = {
   },
   en: {
     choosePickupPoint: "Choose a pickup point",
+    statuses: {
+      cancelled: "Cancelled",
+      delivered: "Delivered",
+      paid: "Paid",
+      pending_payment: "Awaiting payment",
+      processing: "Being prepared",
+      refunded: "Refunded",
+      shipped: "Shipped",
+    },
     track: "Track the parcel",
     invoice: "Invoice",
     accountErrors: {

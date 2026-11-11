@@ -1,5 +1,5 @@
 import { button, input, Stack, Text, textarea } from "@trebired/frontend/react";
-import { useEffect, useState, type ChangeEvent } from "react";
+import { Fragment, useEffect, useState, type ChangeEvent } from "react";
 import { formatMoney, localized } from "./../money.js";
 import type { Order, PickupPoint } from "./../types.js";
 import { storefrontRequest, type StorefrontError } from "./api.js";
@@ -29,9 +29,16 @@ function Choices(props: { items: { id: string; label: string }[]; onPick: (id: s
     <Stack gap="xs">
     <Text as="strong">{props.title}</Text>
     <div className={classes("inline-row", "gap-xs", "wrap")}>
-    {props.items.map((item) =>
-        button({ active: item.id === props.value, children: item.label, key: item.id, onClick: () => props.onPick(item.id), variant: "secondary" }),
-    )}
+    {props.items.map((item) => (
+          <Fragment key={item.id}>
+          {button({
+                active: item.id === props.value,
+                children: item.label,
+                onClick: () => props.onPick(item.id),
+                variant: item.id === props.value ? "primary" : "secondary",
+          })}
+          </Fragment>
+    ))}
     </div>
     </Stack>
   );

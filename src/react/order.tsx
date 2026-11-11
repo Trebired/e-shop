@@ -7,6 +7,10 @@ import type { InvoiceSummary, Order } from "./../types.js";
 import { useStorefront } from "./context.js";
 import { useOrder } from "./hooks.js";
 
+function lineName(line: Order["lines"][number], locale: string): string {
+  return [localized(line.name, locale), localized(line.variantName, locale)].filter(Boolean).join(" ");
+}
+
 function BankTransfer(props: { order: Order }) {
   const { copy, locale } = useStorefront();
   const pay = props.order.payment.instructions;
@@ -73,9 +77,9 @@ function OrderSummary(props: { invoices?: InvoiceSummary[]; order: Order }) {
   return (
     <Stack gap="xs">
     <Text as="strong">{copy.orderPlaced.replace("{{number}}", order.number)}</Text>
-    <Text muted>{copy.status}: {order.status}</Text>
+    <Text muted>{copy.status}: {copy.statuses[order.status] ?? order.status}</Text>
     {order.lines.map((line) => (
-          <Text key={line.sku}>{line.quantity} × {localized(line.name, locale)} {localized(line.variantName, locale)}: {money(line.totalMinor)}</Text>
+          <Text key={line.sku}>{`${line.quantity} × ${lineName(line, locale)}: ${money(line.totalMinor)}`}</Text>
     ))}
     <Text>{copy.shipping}: {localized(
         order.shipping.label,

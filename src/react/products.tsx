@@ -1,6 +1,6 @@
 import { classes } from "./classes.js";
-import { button, input, Stack, Text } from "@trebired/frontend/react";
-import { useState, type ChangeEvent } from "react";
+import { button, input, Stack, Text, Title } from "@trebired/frontend/react";
+import { Fragment, useState, type ChangeEvent } from "react";
 import { formatMoney, localized } from "./../money.js";
 import type { Product } from "./../types.js";
 import { useStorefront } from "./context.js";
@@ -29,6 +29,25 @@ function ProductGrid(props: { currency: string; productHref: (product: Product) 
   );
 }
 
+function VariantPicker(props: { onPick: (id: string) => void; value: string; variants: Product["variants"] }) {
+  const { locale } = useStorefront();
+  if (props.variants.length < 2) return null;
+  return (
+    <div className={classes("inline-row", "gap-xs", "wrap")}>
+    {props.variants.map((entry) => (
+          <Fragment key={entry.id}>
+          {button({
+                active: entry.id === props.value,
+                children: localized(entry.name, locale, entry.sku),
+                onClick: () => props.onPick(entry.id),
+                variant: entry.id === props.value ? "primary" : "secondary",
+          })}
+          </Fragment>
+    ))}
+    </div>
+  );
+}
+
 function ProductDetail(props: { currency: string; product: Product }) {
   const { copy, locale, setCartItem } = useStorefront();
   const variants = props.product.variants;
@@ -45,22 +64,14 @@ function ProductDetail(props: { currency: string; product: Product }) {
       setMessage(copy.error);
     }
   };
+  const image = props.product.images[0];
+  const description = localized(props.product.description, locale);
   return (
     <Stack gap="sm">
-    <Text>{localized(props.product.description, locale)}</Text>
-    {variants.length > 1 ? (
-        <div className={classes("inline-row", "gap-xs", "wrap")}>
-        {variants.map((entry) =>
-            button({
-                active: entry.id === variantId,
-                children: localized(entry.name, locale, entry.sku),
-                key: entry.id,
-                onClick: () => setVariantId(entry.id),
-                variant: "secondary",
-            }),
-        )}
-        </div>
-      ) : null}
+    <Title level={1}>{localized(props.product.name, locale)}</Title>
+    {image ? <img alt={image.alt} className={classes("width-full")} src={image.src} /> : null}
+    {description ? <Text>{description}</Text> : null}
+    <VariantPicker onPick={setVariantId} value={variantId} variants={variants} />
     {variant ? <Text as="strong">{formatMoney(variant.priceMinor, props.currency, locale)}</Text> : null}
     {input({
           label: copy.quantity,

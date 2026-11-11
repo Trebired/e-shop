@@ -4,6 +4,14 @@ All notable changes to `@trebired/e-shop` will be documented here.
 
 This project follows semantic versioning once published.
 
+## 0.5.1
+
+- `ProductDetail` shows the product name as the page heading and its first image, and leaves out an empty description.
+- The order page names the order status in the customer's language instead of showing its code.
+- The chosen variant, shipping and payment are shown as selected.
+- An order line without a variant name no longer leaves a gap before the price.
+- Fixed a React warning about a key passed inside button props in checkout and on the product page.
+
 ## 0.5.0
 
 - Added customer accounts: registration, sign-in with an HttpOnly session cookie, sign-out and password reset by email. Failed sign-ins are throttled per email and address.
