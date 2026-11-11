@@ -104,7 +104,7 @@ With `eventsUrl`, every order change is posted there as JSON, signed the same wa
 
 ### Entrypoints
 
-- `@trebired/e-shop`: types, `formatMoney`, `vatLines`, `localized` and the API constants. Browser safe.
+- `@trebired/e-shop`: types, `formatMoney`, `vatLines`, `localized`, the order actions per status (`orderActionsFor`) and the API constants. Browser safe.
 - `@trebired/e-shop/config`: `defineConfig`, `loadConfig`, `normalizeConfig`.
 - `@trebired/e-shop/server`: `createEshop`, `migrateEshop`, the catalog and order functions, `signRequest`, `verifySignature`, `spaydString`.
 - `@trebired/e-shop/client`: `createEshopAdminClient`, `EshopAdminError`.

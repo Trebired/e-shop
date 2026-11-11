@@ -4,6 +4,10 @@ All notable changes to `@trebired/e-shop` will be documented here.
 
 This project follows semantic versioning once published.
 
+## 0.1.2
+
+- Added `orderActionsFor(status)`, `ORDER_MOVES` and `ORDER_ACTIONS` to the root entry, so an admin application offers only the order actions the shop accepts.
+
 ## 0.1.1
 
 - The admin API and `client.product()` find a product by its slug as well as by its id.

@@ -1,21 +1,18 @@
-import type { Order, OrderStatus } from "./../../types.js";
+import type { Order } from "./../../types.js";
 import type { Db } from "./../db/database.js";
 import { conflict } from "./../errors.js";
 import { text } from "./../input.js";
 import { readOrder, recordEvent } from "./read.js";
+import { ORDER_ACTIONS, ORDER_MOVES, type OrderAction } from "./../../orders.js";
 
-type OrderAction = "cancel" | "deliver" | "mark-paid" | "process" | "refund" | "ship";
-
-const MOVES: Record<OrderAction, {from:OrderStatus[];stamp:string|null;to:OrderStatus}> = {
-  cancel: { from: ["pending_payment", "paid", "processing"], stamp: "cancelled_at", to: "cancelled" },
-  deliver: { from: ["shipped"], stamp: "delivered_at", to: "delivered" },
-  "mark-paid": { from: ["pending_payment"], stamp: "paid_at", to: "paid" },
-  process: { from: ["paid"], stamp: null, to: "processing" },
-  refund: { from: ["paid", "processing", "shipped", "delivered"], stamp: null, to: "refunded" },
-  ship: { from: ["paid", "processing"], stamp: "shipped_at", to: "shipped" },
+const STAMPS: Record<OrderAction, string|null> = {
+  cancel: "cancelled_at",
+  deliver: "delivered_at",
+  "mark-paid": "paid_at",
+  process: null,
+  refund: null,
+  ship: "shipped_at",
 };
-
-const ORDER_ACTIONS = Object.keys(MOVES) as OrderAction[];
 
 async function restock(db: Db, orderId: string): Promise<void> {
   await db.exec(
@@ -26,12 +23,13 @@ async function restock(db: Db, orderId: string): Promise<void> {
 }
 
 async function moveOrder(db: Db, number: string, action: OrderAction, input: any, actor: string): Promise<Order> {
-  const move = MOVES[action];
+  const move = ORDER_MOVES[action];
+  const stampColumn = STAMPS[action];
   await db.tx(async(tx) => {
       const row = await tx.one("select id, status, payment from eshop_orders where number = $1 for update", [String(number)]);
       if (!row) throw conflict("eshop-order-not-found");
       if (!move.from.includes(row.status)) throw conflict("eshop-order-status-invalid", { status: row.status });
-      const stamp = move.stamp ? `, ${move.stamp} = now()` : "";
+      const stamp = stampColumn ? `, ${stampColumn} = now()` : "";
       const tracking = action === "ship" ? text(input?.tracking, "tracking", 200) : null;
       const paymentStatus = { "mark-paid": "paid", refund: "refunded" }[action as string];
       const payment = paymentStatus ? { ...row.payment, status: paymentStatus } : row.payment;

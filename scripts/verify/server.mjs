@@ -108,6 +108,9 @@ async function verifyStockRace(url, variants) {
 }
 
 async function verifyTransitions(admin, order, raceOrder) {
+  const root = await import(pathToFileURL(path.join(rootDir, "dist", "index.js")).href);
+  assert.deepEqual(root.orderActionsFor("pending_payment"), ["cancel", "mark-paid"], "an unpaid order can be paid or cancelled");
+  assert.deepEqual(root.orderActionsFor("delivered"), ["refund"], "a delivered order can only be refunded");
   await assert.rejects(admin.action(order.number, "ship"), /eshop-order-status-invalid/u, "an unpaid order cannot ship");
   await admin.action(order.number, "mark-paid");
   const shipped = (await admin.action(order.number, "ship", { tracking: "Z123" })).order;
