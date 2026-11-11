@@ -4,6 +4,8 @@ import { getProduct, listProducts } from "./catalog/products.js";
 import { ensureCart, readCart, setCartItem } from "./cart.js";
 import type { EshopContext } from "./context.js";
 import { createRouter, readCookie, setCookie, type RouteContext } from "./http.js";
+import { startPayment } from "./gateways/flow.js";
+import { gatewayRoutes } from "./gateways/routes.js";
 import { afterOrderChange } from "./lifecycle.js";
 import { placeOrder } from "./orders/checkout.js";
 import { readOrder } from "./orders/read.js";
@@ -52,7 +54,8 @@ function checkoutRoutes(context: EshopContext, router: ReturnType<typeof createR
   router.add("POST", "/checkout", async(route) => {
       const order = await placeOrder(context.db, context.config, await cartToken(context, route), await route.json());
       await afterOrderChange(context, order, "created");
-      return { order };
+      if (!context.gateways[order.payment.method as keyof typeof context.gateways]) return { order };
+      return { order: await startPayment(context, order).catch (() => order) };
   });
   router.add("GET", "/orders/:token", async(route) => ({ order: await readOrder(context.db, { token: route.params.token }) }));
 }
@@ -62,6 +65,7 @@ function storefrontRouter(context: EshopContext) {
   catalogRoutes(context, router);
   cartRoutes(context, router);
   checkoutRoutes(context, router);
+  gatewayRoutes(context, router);
   return router;
 }
 

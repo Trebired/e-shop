@@ -31,7 +31,8 @@ async function moveOrder(db: Db, number: string, action: OrderAction, input: any
       if (!move.from.includes(row.status)) throw conflict("eshop-order-status-invalid", { status: row.status });
       const stamp = stampColumn ? `, ${stampColumn} = now()` : "";
       const tracking = action === "ship" ? text(input?.tracking, "tracking", 200) : null;
-      const paymentStatus = { "mark-paid": "paid", refund: "refunded" }[action as string];
+      const gatewayPaid = row.payment?.status === "paid" && row.payment?.method !== "bank_transfer";
+      const paymentStatus = action === "cancel" && gatewayPaid ? "refunded" : { "mark-paid": "paid", refund: "refunded" }[action as string];
       const payment = paymentStatus ? { ...row.payment, status: paymentStatus } : row.payment;
       await tx.exec(`update eshop_orders set status = $2, payment = $3, tracking = coalesce($4, tracking)${stamp} where id = $1`, [
           row.id,

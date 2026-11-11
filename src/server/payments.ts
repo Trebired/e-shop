@@ -50,7 +50,14 @@ async function bankTransferInstructions(config: NormalizedEshopConfig, order: { 
 }
 
 function availablePaymentMethods(config: NormalizedEshopConfig): PaymentMethodKind[] {
-  return config.payments.bankTransfer ? ["bank_transfer"] : [];
+  const payments = config.payments;
+  const enabled: [PaymentMethodKind, boolean][] = [
+    ["bank_transfer", Boolean(payments.bankTransfer)],
+    ["stripe", Boolean(payments.stripe)],
+    ["gopay", Boolean(payments.gopay)],
+    ["comgate", Boolean(payments.comgate)],
+  ];
+  return enabled.filter(([, on]) => on).map(([kind]) => kind);
 }
 
 export { availablePaymentMethods, bankTransferInstructions, spaydString };

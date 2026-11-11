@@ -66,6 +66,7 @@ function useCheckout(onPlaced: (order: Order) => void) {
       const result = await storefrontRequest<{ order: Order }>(store.basePath, "/checkout", body);
       await store.refreshCart();
       onPlaced(result.order);
+      if (result.order.payment.redirectUrl) window.location.assign(result.order.payment.redirectUrl);
     } catch (failure) {
       setError((failure as StorefrontError).code || store.copy.error);
     } finally {

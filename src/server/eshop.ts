@@ -6,6 +6,8 @@ import { pruneCarts } from "./cart.js";
 import type { EshopContext } from "./context.js";
 import { createDb } from "./db/database.js";
 import { migrateEshop } from "./db/migrate.js";
+import { createGateways } from "./gateways/index.js";
+import type { GatewaySecrets } from "./gateways/types.js";
 import { dispatch } from "./http.js";
 import { createMailer } from "./mail.js";
 import { storefrontRouter } from "./storefront.js";
@@ -14,6 +16,7 @@ type CreateEshopOptions = {
   adminToken: string;
   config: EshopConfig | NormalizedEshopConfig;
   eventsUrl?: string;
+  gateways?: GatewaySecrets;
   pool: pg.Pool;
   publicUrl?: string;
   smtpUrl?: string;
@@ -34,6 +37,7 @@ function createEshop(options: CreateEshopOptions) {
     config,
     db,
     eventsUrl: options.eventsUrl ?? "",
+    gateways: createGateways(config, options.gateways),
     mailer: createMailer(options.smtpUrl ?? "", config.mail.from),
     pool: options.pool,
     publicUrl: options.publicUrl ?? "",

@@ -4,17 +4,26 @@
       "#07l06n99peor": [
         "../../../src/server/mail.ts"
       ],
+      "#095y1htfngtr": [
+        "../../../src/server/gateways/index.ts"
+      ],
       "#0bkgwtary10p": [
         "../../../src/index.ts"
       ],
       "#0hwfgyjxfzq9": [
         "../../../src/server/orders/transitions.ts"
       ],
+      "#0ttpa3ndovo5": [
+        "../../../src/server/gateways/gopay.ts"
+      ],
       "#1z2mvy1yjhol": [
         "../../../scripts/build/generated/tsconfig.mjs"
       ],
       "#3gxkudn38kc0": [
         "../../../src/server/eshop.ts"
+      ],
+      "#3kgg7kh1dmed": [
+        "../../../src/server/gateways/routes.ts"
       ],
       "#3p7478pyj88y": [
         "../../../scripts/verify/server.mjs"
@@ -43,6 +52,9 @@
       "#auxefl96vrkd": [
         "../../../src/config/load.ts"
       ],
+      "#bgk6emtqtlc4": [
+        "../../../src/server/gateways/types.ts"
+      ],
       "#biu8in54c0j2": [
         "../../../src/server/notify.ts"
       ],
@@ -51,6 +63,9 @@
       ],
       "#cgh8ghmdpqyv": [
         "../../../src/server/storefront.ts"
+      ],
+      "#ch08y2rwrfb7": [
+        "../../../scripts/verify/shared.mjs"
       ],
       "#co78ou1ny9ho": [
         "../../../src/server/messages.ts"
@@ -73,6 +88,9 @@
       "#fvzd9x5i1rad": [
         "../../../src/server/shipping.ts"
       ],
+      "#gjfaoukr41op": [
+        "../../../src/server/gateways/comgate.ts"
+      ],
       "#gkt70pnvnew9": [
         "../../../src/server/input.ts"
       ],
@@ -90,6 +108,9 @@
       ],
       "#jhfp374gortq": [
         "../../../src/version.ts"
+      ],
+      "#jhv5dx24u0l8": [
+        "../../../scripts/verify/gateways.mjs"
       ],
       "#kew7b0jjtzhn": [
         "../../../src/constants.ts"
@@ -111,6 +132,12 @@
       ],
       "#oq89ohf2w03j": [
         "../../../scripts/prepare-dist.mjs"
+      ],
+      "#pxrtqfisuacm": [
+        "../../../src/server/gateways/stripe.ts"
+      ],
+      "#pyvwusrner1k": [
+        "../../../src/server/gateways/flow.ts"
       ],
       "#r19ha8r38ums": [
         "../../../src/server/db/migrate.ts"
@@ -141,6 +168,9 @@
       ],
       "#vgisrujesdj9": [
         "../../../src/server/stats.ts"
+      ],
+      "#vkbr5nd6de9p": [
+        "../../../src/server/gateways/request.ts"
       ],
       "#wpoi3f7topaa": [
         "../../../scripts/verify/react.mjs"

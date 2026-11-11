@@ -6,6 +6,7 @@ import { saveProduct } from "./catalog/products.js";
 import { deleteVariant, saveVariant, setStock } from "./catalog/variants.js";
 import type { EshopContext } from "./context.js";
 import { EshopError } from "./errors.js";
+import { refundThroughGateway } from "./gateways/flow.js";
 import { createRouter, type RouteContext } from "./http.js";
 import { afterOrderChange } from "./lifecycle.js";
 import { listOrders, orderEvents, readOrder } from "./orders/read.js";
@@ -84,7 +85,9 @@ function orderAdmin(context: EshopContext, add: (method: string, path: string, h
   add("POST", "/orders/:number/:action", async(route) => {
       const action = route.params.action as OrderAction;
       if (!ORDER_ACTIONS.includes(action)) throw new EshopError(404, "eshop-action-unknown");
-      const order = await moveOrder(context.db, route.params.number as string, action, await route.json(), ACTOR);
+      const input = await route.json();
+      await refundThroughGateway(context, route.params.number as string, action);
+      const order = await moveOrder(context.db, route.params.number as string, action, input, ACTOR);
       await afterOrderChange(context, order, action);
       return { order };
   });

@@ -3,7 +3,7 @@ import { resolveForVersion } from "@trebired/utils";
 const SUPPORTED_SHIPPING = ["pickup", "courier"];
 
 import { PACKAGE_VERSION } from "./../version.js";
-import type { BankTransferConfig, EshopConfig, NormalizedEshopConfig, ShippingMethodConfig } from "./types.js";
+import type { BankTransferConfig, EshopConfig, GatewaysConfig, NormalizedEshopConfig, NormalizedGateways, ShippingMethodConfig } from "./types.js";
 
 const IBAN = /^[A-Z]{2}\d{2}[A-Z0-9]{10,30}$/u;
 const ID = /^[a-z0-9_-]{1,40}$/u;
@@ -43,6 +43,18 @@ function normalizeBank(value: BankTransferConfig | undefined): Required<BankTran
   };
 }
 
+function normalizeGateways(value: GatewaysConfig | undefined): NormalizedGateways {
+  const gopay = value?.gopay;
+  const comgate = value?.comgate;
+  if (gopay && !/^\d{6,12}$/u.test(String(gopay.goid ?? ""))) throw invalid("payments.gopay.goid must be the numeric GoPay shop id");
+  if (comgate && !String(comgate.merchant ?? "").trim()) throw invalid("payments.comgate.merchant is required");
+  return {
+    comgate: comgate ? { merchant: String(comgate.merchant).trim(), test: comgate.test === true } : null,
+    gopay: gopay ? { goid: String(gopay.goid), sandbox: gopay.sandbox === true } : null,
+    stripe: value?.stripe?.enabled ? { enabled: true } : null,
+  };
+}
+
 function normalizeConfig(config: EshopConfig, options: { configPath?: string; requireForVersion?: boolean } = {}): NormalizedEshopConfig {
   if (!config || typeof config !== "object" || !config.shop?.name) throw invalid("shop.name is required");
   const locales = config.shop.locales?.length ? config.shop.locales : ["cs"];
@@ -60,7 +72,7 @@ function normalizeConfig(config: EshopConfig, options: { configPath?: string; re
     }),
     mail: { from: String(config.mail?.from ??""), operator: String(config.mail?.operator ?? "") },
     orders: { statusPath: String(config.orders?.statusPath ?? "/order/{token}") },
-    payments: { bankTransfer: normalizeBank(config.payments?.bankTransfer) },
+    payments: { bankTransfer: normalizeBank(config.payments?.bankTransfer), ...normalizeGateways(config.payments) },
     shipping: normalizeShipping(config.shipping),
     shop: {
       currency: String(config.shop.currency ?? "CZK").toUpperCase(),

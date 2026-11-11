@@ -99,6 +99,11 @@ const SCHEMA_V1 = [
   )`,
 ];
 
-const MIGRATIONS = [{ id: "eshop_001_core", statements: SCHEMA_V1 }];
+const PAYMENTS_V2 = ["create index eshop_orders_payment_reference on eshop_orders ((payment->>'method'), (payment->>'reference'))"];
+
+const MIGRATIONS = [
+  { id: "eshop_001_core", statements: SCHEMA_V1 },
+  { id: "eshop_002_payment_reference", statements: PAYMENTS_V2 },
+];
 
 export { MIGRATIONS };

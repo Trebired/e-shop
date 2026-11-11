@@ -1,8 +1,8 @@
 # @trebired/e-shop
 
-Postgres-backed e-shop for Bun apps: catalog with variants and stock, cart, checkout, orders with a status history, Czech bank transfer payments with a QR code, order email, a storefront structure for `@trebired/frontend`, and a signed admin API that is always on.
+Postgres-backed e-shop for Bun apps: catalog with variants and stock, cart, checkout, orders with a status history, Czech bank transfer payments with a QR code, card payments through Stripe, GoPay and Comgate, order email, a storefront structure for `@trebired/frontend`, and a signed admin API that is always on.
 
-The package owns the shop schema, the order rules, the storefront and admin HTTP routes and the storefront components. The app owns its Postgres pool, its pages and their layout, its SMTP account, its public address and the admin token. The package does not own product photography storage, accounting, a customer marketing system or the admin interface itself; an admin application drives it through the admin API.
+The package owns the shop schema, the order rules, the storefront and admin HTTP routes and the storefront components. The app owns its Postgres pool, its pages and their layout, its SMTP account, its public address, the admin token and its payment gateway accounts and credentials. The package does not own product photography storage, accounting, a customer marketing system or the admin interface itself; an admin application drives it through the admin API.
 
 ## Install
 
@@ -27,6 +27,9 @@ const eshop = createEshop({
   pool: new pg.Pool({ connectionString: process.env.DATABASE_URL }),
   publicUrl: "https://shop.example",
   smtpUrl: process.env.SMTP_URL,
+  gateways: {
+    stripe: { secretKey: process.env.STRIPE_SECRET_KEY!, webhookSecret: process.env.STRIPE_WEBHOOK_SECRET! },
+  },
 });
 await eshop.migrate();
 
@@ -49,6 +52,10 @@ A variant's `stock` is a number or `null` for unlimited. Checkout takes the stoc
 
 An order moves `pending_payment` to `paid`, `processing`, `shipped` and `delivered`; it can be `cancelled` before it ships and `refunded` once paid. Every change is recorded with the actor in the order history. Order numbers are the year followed by a six-digit counter, and the number doubles as the bank variable symbol.
 
+### Payments
+
+Bank transfer shows the account, the variable symbol and a QR payment code; the operator marks the order paid. Stripe, GoPay and Comgate share one payment interface. Checkout creates the order, then starts the payment and returns `payment.redirectUrl`, where the customer pays. The gateway's notification and the customer's return are both checked by asking the gateway for the payment status, so a forged or repeated notification changes nothing and a paid order is marked paid once. A failed or abandoned payment leaves the order waiting, and `POST /orders/:token/pay` starts a new one. Refunding, or cancelling a paid card order, returns the money through the same gateway before the order changes.
+
 ### Storefront
 
 `@trebired/e-shop/react` gives the pieces a shop page is built from: `EshopProvider`, `ProductGrid`, `ProductCard`, `ProductDetail`, `CartView`, `CheckoutForm` and `OrderStatus`, plus `useCatalog`, `useProduct` and `useOrder`. They render `@trebired/frontend` primitives and namespace classes, ship Czech and English text, and leave layout and routing to the app.
@@ -67,14 +74,19 @@ An order moves `pending_payment` to `paid`, `processing`, `shipped` and `deliver
 import { defineConfig } from "@trebired/e-shop/config";
 
 export default defineConfig({
-  forVersion: "0.1.0",
+  forVersion: "0.2.0",
   shop: { name: "Example", currency: "CZK", locales: ["cs", "en"] },
   vat: { defaultRate: 21 },
   shipping: [
     { id: "pickup", kind: "pickup", label: { cs: "Osobní odběr", en: "Pickup" }, priceMinor: 0 },
     { id: "courier", kind: "courier", label: { cs: "Kurýr", en: "Courier" }, priceMinor: 12900, freeFromMinor: 200000 },
   ],
-  payments: { bankTransfer: { iban: "CZ6508000000192000145399", accountName: "Example s.r.o.", dueDays: 7 } },
+  payments: {
+    bankTransfer: { iban: "CZ6508000000192000145399", accountName: "Example s.r.o.", dueDays: 7 },
+    stripe: { enabled: true },
+    gopay: { goid: "8123456789", sandbox: true },
+    comgate: { merchant: "123456", test: true },
+  },
   mail: { from: "shop@example.cz", operator: "orders@example.cz" },
   orders: { statusPath: "/order/{token}" },
 });
@@ -85,6 +97,14 @@ export default defineConfig({
 ### Environment
 
 `createEshop` takes the admin token, SMTP URL, public URL and events URL as options; the app reads them from its own environment. The admin token must be at least 32 characters.
+
+Gateway credentials never go in the config file. Each gateway enabled in `payments` needs its credentials in `createEshop({ gateways })`, or `createEshop` throws:
+
+- `stripe`: `secretKey` and `webhookSecret`. Point a Stripe webhook for `checkout.session.*` events at `<publicUrl>/eshop/api/payments/stripe/notify`.
+- `gopay`: `clientId` and `clientSecret`. `goid` and `sandbox` stay in the config.
+- `comgate`: `secret`. `merchant` and `test` stay in the config. Set the push address in the Comgate portal to `<publicUrl>/eshop/api/payments/comgate/notify`.
+
+Card payments need `publicUrl`, because the gateways send the customer and their notifications back to it. Each gateway also takes `apiBase`, which replaces the gateway's address for tests and proxies.
 
 ## Runtime
 
@@ -115,15 +135,15 @@ With `eventsUrl`, every order change is posted there as JSON, signed the same wa
 - `GET /eshop/api/catalog`, `GET /eshop/api/products/:slug`
 - `GET /eshop/api/cart`, `POST /eshop/api/cart/items`
 - `GET /eshop/api/checkout/options`, `POST /eshop/api/checkout`
-- `GET /eshop/api/orders/:token`
+- `GET /eshop/api/orders/:token`, `POST /eshop/api/orders/:token/pay`, `POST /eshop/api/orders/:token/refresh`
+- `POST` and `GET /eshop/api/payments/:gateway/notify`, `GET /eshop/api/payments/:gateway/return`
 
-POST routes accept only `application/json`.
+POST routes accept only `application/json`, except the gateway notifications, which accept what each gateway sends.
 
 ## What It Does Not Do
 
 This package does not:
 
-- take card payments in this release; Stripe, GoPay and Comgate arrive in later releases behind the same payment interface;
 - ship Packeta pickup points, invoices or customer accounts in this release;
 - store or resize product images; products refer to image URLs the app serves;
 - compute taxes other than VAT included in the price, or handle more than one currency per shop;

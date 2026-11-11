@@ -1,10 +1,10 @@
 import assert from "node:assert/strict";
 import crypto from "node:crypto";
-import http from "node:http";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import pg from "pg";
 import { resolveLogger } from "@package/logger-adapter";
+import { listen, resetDatabase } from "./shared.mjs";
 
 const log = resolveLogger({ source: "@trebired/e-shop" });
 const rootDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "..");
@@ -13,7 +13,7 @@ const TOKEN = crypto.randomBytes(32).toString("hex");
 const DATABASE_URL = process.env.TEST_DATABASE_URL;
 
 const CONFIG = {
-  forVersion: "0.1.0",
+  forVersion: "0.2.0",
   payments: { bankTransfer: { accountName: "Verify s.r.o.", iban: "CZ6508000000192000145399" } },
   shipping: [
     { id: "pickup", kind: "pickup", label: { cs: "Osobní odběr", en: "Pickup" }, priceMinor: 0 },
@@ -21,18 +21,6 @@ const CONFIG = {
   ],
   shop: { locales: ["cs", "en"], name: "Verify Shop" },
 };
-
-async function resetDatabase(pool) {
-  const tables = await pool.query("select tablename from pg_tables where schemaname = 'public' and tablename like 'eshop_%'");
-  if (tables.rows.length) await pool.query(`drop table ${tables.rows.map((row) => row.tablename).join(", ")} cascade`);
-}
-
-function listen(handler) {
-  return new Promise((resolve) => {
-      const server = http.createServer(handler);
-      server.listen(0, "127.0.0.1", () => resolve({ server, url: `http://127.0.0.1:${server.address().port}` }));
-  });
-}
 
 async function call(url, method, pathName, body, cookie = "") {
   const response = await fetch(`${url}${pathName}`, {
@@ -165,7 +153,7 @@ async function verifyServer() {
   const pool = new pg.Pool({ connectionString: DATABASE_URL, max: 8 });
   await resetDatabase(pool);
   const eshop = server.createEshop({ adminToken: TOKEN, config: CONFIG, pool });
-  assert.deepEqual(await eshop.migrate(), ["eshop_001_core"], "the first run applies the schema");
+  assert.deepEqual(await eshop.migrate(), ["eshop_001_core", "eshop_002_payment_reference"], "the first run applies the schema");
   assert.deepEqual(await eshop.migrate(), [], "a second run applies nothing");
   const { server: http0, url } = await listen((req, res) => eshop.handle(req, res));
   await verifyAdminAuth(url, server);
