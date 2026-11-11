@@ -7,6 +7,7 @@ import { deleteVariant, saveVariant, setStock } from "./catalog/variants.js";
 import type { EshopContext } from "./context.js";
 import { EshopError } from "./errors.js";
 import { refundThroughGateway } from "./gateways/flow.js";
+import { ensurePacket, packetLabel, prepareShipment } from "./packeta.js";
 import { createRouter, type RouteContext } from "./http.js";
 import { afterOrderChange } from "./lifecycle.js";
 import { listOrders, orderEvents, readOrder } from "./orders/read.js";
@@ -82,10 +83,15 @@ function orderAdmin(context: EshopContext, add: (method: string, path: string, h
       const order = await readOrder(context.db, { number: route.params.number });
       return { events: await orderEvents(context.db, order.id), order };
   });
+  add("POST", "/orders/:number/packet", async(route) => ({ order: await ensurePacket(context, route.params.number as string) }));
+  add("GET", "/orders/:number/packet/label", async(route) => ({
+        pdf: (await packetLabel(context, route.params.number as string)).toString("base64"),
+  }));
   add("POST", "/orders/:number/:action", async(route) => {
       const action = route.params.action as OrderAction;
       if (!ORDER_ACTIONS.includes(action)) throw new EshopError(404, "eshop-action-unknown");
-      const input = await route.json();
+      const body = await route.json();
+      const input = action === "ship" ? await prepareShipment(context, route.params.number as string, body) : body;
       await refundThroughGateway(context, route.params.number as string, action);
       const order = await moveOrder(context.db, route.params.number as string, action, input, ACTOR);
       await afterOrderChange(context, order, action);

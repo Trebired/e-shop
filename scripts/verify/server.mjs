@@ -4,7 +4,7 @@ import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import pg from "pg";
 import { resolveLogger } from "@package/logger-adapter";
-import { listen, resetDatabase } from "./shared.mjs";
+import { call, listen, resetDatabase } from "./shared.mjs";
 
 const log = resolveLogger({ source: "@trebired/e-shop" });
 const rootDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "..");
@@ -13,7 +13,7 @@ const TOKEN = crypto.randomBytes(32).toString("hex");
 const DATABASE_URL = process.env.TEST_DATABASE_URL;
 
 const CONFIG = {
-  forVersion: "0.2.0",
+  forVersion: "0.3.0",
   payments: { bankTransfer: { accountName: "Verify s.r.o.", iban: "CZ6508000000192000145399" } },
   shipping: [
     { id: "pickup", kind: "pickup", label: { cs: "Osobní odběr", en: "Pickup" }, priceMinor: 0 },
@@ -21,15 +21,6 @@ const CONFIG = {
   ],
   shop: { locales: ["cs", "en"], name: "Verify Shop" },
 };
-
-async function call(url, method, pathName, body, cookie = "") {
-  const response = await fetch(`${url}${pathName}`, {
-      body: body === undefined ? undefined : JSON.stringify(body),
-      headers: { ...(body === undefined ? {} : { "content-type": "application/json" }), ...(cookie ? { cookie } : {}) },
-      method,
-  });
-  return { cookie: (response.headers.get("set-cookie") ?? "").split(";")[0] || cookie, json: await response.json(), status: response.status };
-}
 
 async function verifyAdminAuth(url, server) {
   assert.equal((await call(url, "GET", "/eshop/admin/api/v1/info")).status, 401, "an unsigned admin call is refused");

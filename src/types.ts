@@ -70,7 +70,16 @@ type OrderLine = {
 
 type PaymentInstructions = { accountName: string; amountMinor: number; dueDate: string; iban: string; qrSvg: string; variableSymbol: string };
 
-type OrderShipping = { kind: ShippingKind; label: Localized; methodId: string; pickupPoint: { id: string; name: string } | null; priceMinor: number };
+type PickupPoint = { carrierId: string; id: string; name: string };
+type PacketaPacket = { barcode: string; id: string; trackingUrl: string };
+type OrderShipping = {
+  kind: ShippingKind;
+  label: Localized;
+  methodId: string;
+  packet: PacketaPacket | null;
+  pickupPoint: PickupPoint | null;
+  priceMinor: number;
+};
 type OrderPayment = {
   instructions: PaymentInstructions | null;
   method: PaymentMethodKind;
@@ -118,9 +127,11 @@ export type {
   OrderShipping,
   OrderStatus,
   OrderTotals,
+  PacketaPacket,
   PaymentInstructions,
   PaymentMethodKind,
   PaymentStatus,
+  PickupPoint,
   Product,
   ProductImage,
   ProductStatus,

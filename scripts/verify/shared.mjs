@@ -12,4 +12,13 @@ async function resetDatabase(pool) {
   if (tables.rows.length) await pool.query(`drop table ${tables.rows.map((row) => row.tablename).join(", ")} cascade`);
 }
 
-export { listen, resetDatabase };
+async function call(url, method, pathName, body, cookie = "") {
+  const response = await fetch(`${url}${pathName}`, {
+      body: body === undefined ? undefined : JSON.stringify(body),
+      headers: { ...(body === undefined ? {} : { "content-type": "application/json" }), ...(cookie ? { cookie } : {}) },
+      method,
+  });
+  return { cookie: (response.headers.get("set-cookie") ?? "").split(";")[0] || cookie, json: await response.json(), status: response.status };
+}
+
+export { call, listen, resetDatabase };

@@ -10,6 +10,8 @@ type GatewaysConfig = {
   stripe?: { enabled: boolean };
 };
 
+type PacketaConfig = { apiKey: string; sender: string };
+
 type NormalizedGateways = {
   comgate: { merchant: string; test: boolean } | null;
   gopay: { goid: string; sandbox: boolean } | null;
@@ -22,6 +24,7 @@ type EshopConfig = {
   forVersion?: string;
   mail?: { from?: string; operator?: string };
   orders?: { statusPath?: string };
+  packeta?: PacketaConfig;
   payments?: GatewaysConfig& { bankTransfer?: BankTransferConfig };
   shipping?: ShippingMethodConfig[];
   shop: { currency?: string; defaultLocale?: string; locales?: string[]; name: string };
@@ -34,6 +37,7 @@ type NormalizedEshopConfig = {
   forVersion: string;
   mail: { from: string; operator: string };
   orders: { statusPath: string };
+  packeta: PacketaConfig | null;
   payments: NormalizedGateways& { bankTransfer: Required<BankTransferConfig>|null };
   shipping: Required<ShippingMethodConfig>[];
   shop: { currency: string; defaultLocale: string; locales: string[]; name: string };
@@ -42,4 +46,13 @@ type NormalizedEshopConfig = {
 
 type LoadedEshopConfig = { config: NormalizedEshopConfig; configPath: string | null };
 
-export type { BankTransferConfig, EshopConfig, GatewaysConfig, NormalizedGateways, LoadedEshopConfig, NormalizedEshopConfig, ShippingMethodConfig };
+export type {
+  BankTransferConfig,
+  EshopConfig,
+  GatewaysConfig,
+  LoadedEshopConfig,
+  NormalizedEshopConfig,
+  NormalizedGateways,
+  PacketaConfig,
+  ShippingMethodConfig,
+};

@@ -58,6 +58,8 @@ function createEshopAdminClient(options: AdminClientOptions) {
     deleteProduct: (id: string) => request<{ok:true}>("DELETE", `/products/${encodeURIComponent(id)}`),
     info: () => request<{currency:string;locales:string[];name:string;payments:string[];version:string}>("GET", "/info"),
     order: (number: string) => request<{events:OrderEvent[];order:Order}>("GET", `/orders/${encodeURIComponent(number)}`),
+    createPacket: (number: string) => request<{order:Order}>("POST", `/orders/${encodeURIComponent(number)}/packet`, {}),
+    packetLabel: (number: string) => request<{pdf:string}>("GET", `/orders/${encodeURIComponent(number)}/packet/label`),
     orders: (query: ListQuery = {}) => request<Page<Order>>("GET", `/orders${queryString(query)}`),
     product: (idOrSlug: string) => request<{product:Product}>("GET", `/products/${encodeURIComponent(idOrSlug)}`),
     products: (query: ListQuery = {}) => request<Page<Product>>("GET", `/products${queryString(query)}`),

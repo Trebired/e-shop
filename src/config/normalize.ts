@@ -1,9 +1,17 @@
 import { resolveForVersion } from "@trebired/utils";
 
-const SUPPORTED_SHIPPING = ["pickup", "courier"];
+const SUPPORTED_SHIPPING = ["pickup", "courier", "packeta"];
 
 import { PACKAGE_VERSION } from "./../version.js";
-import type { BankTransferConfig, EshopConfig, GatewaysConfig, NormalizedEshopConfig, NormalizedGateways, ShippingMethodConfig } from "./types.js";
+import type {
+  BankTransferConfig,
+  EshopConfig,
+  GatewaysConfig,
+  NormalizedEshopConfig,
+  NormalizedGateways,
+  PacketaConfig,
+  ShippingMethodConfig,
+} from "./types.js";
 
 const IBAN = /^[A-Z]{2}\d{2}[A-Z0-9]{10,30}$/u;
 const ID = /^[a-z0-9_-]{1,40}$/u;
@@ -55,9 +63,22 @@ function normalizeGateways(value: GatewaysConfig | undefined): NormalizedGateway
   };
 }
 
+function normalizePacketa(config: EshopConfig, shipping: Required<ShippingMethodConfig>[]): PacketaConfig | null {
+  const used = shipping.some((method) => method.kind === "packeta");
+  if (!config.packeta) {
+    if (used) throw invalid("packeta.apiKey and packeta.sender are required for a packeta shipping method");
+    return null;
+  }
+  const apiKey = String(config.packeta.apiKey ?? "").trim();
+  const sender = String(config.packeta.sender ?? "").trim();
+  if (!apiKey || !sender) throw invalid("packeta.apiKey and packeta.sender are required");
+  return { apiKey, sender };
+}
+
 function normalizeConfig(config: EshopConfig, options: { configPath?: string; requireForVersion?: boolean } = {}): NormalizedEshopConfig {
   if (!config || typeof config !== "object" || !config.shop?.name) throw invalid("shop.name is required");
   const locales = config.shop.locales?.length ? config.shop.locales : ["cs"];
+  const shipping = normalizeShipping(config.shipping);
   const basePath = `/${String(config.basePath ?? "/eshop").replace(/^\/+|\/+$/gu, "")}`;
   return {
     basePath,
@@ -72,8 +93,9 @@ function normalizeConfig(config: EshopConfig, options: { configPath?: string; re
     }),
     mail: { from: String(config.mail?.from ??""), operator: String(config.mail?.operator ?? "") },
     orders: { statusPath: String(config.orders?.statusPath ?? "/order/{token}") },
+    packeta: normalizePacketa(config, shipping),
     payments: { bankTransfer: normalizeBank(config.payments?.bankTransfer), ...normalizeGateways(config.payments) },
-    shipping: normalizeShipping(config.shipping),
+    shipping,
     shop: {
       currency: String(config.shop.currency ?? "CZK").toUpperCase(),
       defaultLocale: config.shop.defaultLocale ?? (locales[0] as string),

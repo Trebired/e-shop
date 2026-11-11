@@ -10,6 +10,7 @@ import { createGateways } from "./gateways/index.js";
 import type { GatewaySecrets } from "./gateways/types.js";
 import { dispatch } from "./http.js";
 import { createMailer } from "./mail.js";
+import { createPacketaClient, type PacketaSecrets } from "./packeta.js";
 import { storefrontRouter } from "./storefront.js";
 
 type CreateEshopOptions = {
@@ -17,6 +18,7 @@ type CreateEshopOptions = {
   config: EshopConfig | NormalizedEshopConfig;
   eventsUrl?: string;
   gateways?: GatewaySecrets;
+  packeta?: PacketaSecrets;
   pool: pg.Pool;
   publicUrl?: string;
   smtpUrl?: string;
@@ -31,6 +33,9 @@ function isNormalized(config: EshopConfig | NormalizedEshopConfig): config is No
 function createEshop(options: CreateEshopOptions) {
   if (String(options.adminToken || "").length < MIN_TOKEN_LENGTH) throw new Error("e-shop admin token must be at least 32 characters");
   const config = isNormalized(options.config) ? options.config : normalizeConfig(options.config, { requireForVersion: false });
+  if (config.packeta && !options.packeta?.apiPassword) {
+    throw new Error("e-shop-packeta-password-missing :: a packeta shipping method needs createEshop({ packeta: { apiPassword } })");
+  }
   const db = createDb(options.pool);
   const context: EshopContext = {
     adminToken: options.adminToken,
@@ -39,6 +44,7 @@ function createEshop(options: CreateEshopOptions) {
     eventsUrl: options.eventsUrl ?? "",
     gateways: createGateways(config, options.gateways),
     mailer: createMailer(options.smtpUrl ?? "", config.mail.from),
+    packeta: options.packeta?.apiPassword ? createPacketaClient(options.packeta) : null,
     pool: options.pool,
     publicUrl: options.publicUrl ?? "",
   };

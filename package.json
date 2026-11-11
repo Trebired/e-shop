@@ -8,7 +8,7 @@
     }
   },
   "name": "@trebired/e-shop",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "E-shop for Bun apps: catalog, stock, cart, checkout, orders, payments, a storefront structure for @trebired/frontend and a signed admin API.",
   "type": "module",
   "private": false,
@@ -52,11 +52,12 @@
     "build": "bun run prepare:generated && rm -rf dist && tsc -p tsconfig.build.json && bun ./scripts/prepare-dist.mjs prepare-dist",
     "postpack": "bun ./scripts/prepare-dist.mjs postpack",
     "prepack": "bun run build && bun ./scripts/prepare-dist.mjs prepack",
-    "prepublishOnly": "bun run typecheck && bun run build && bun run verify:pack && bun run verify:server && bun run verify:gateways && bun run verify:react",
+    "prepublishOnly": "bun run typecheck && bun run build && bun run verify:pack && bun run verify:server && bun run verify:gateways && bun run verify:packeta && bun run verify:react",
     "prepare:generated": "bun ./scripts/build/generated/tsconfig.mjs",
     "typecheck": "bun run prepare:generated && tsc --noEmit",
     "verify:gateways": "bun ./scripts/verify/gateways.mjs",
     "verify:pack": "bun ./scripts/verify/pack.mjs",
+    "verify:packeta": "bun ./scripts/verify/packeta.mjs",
     "verify:react": "bun ./scripts/verify/react.mjs",
     "verify:server": "bun ./scripts/verify/server.mjs"
   },

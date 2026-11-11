@@ -1,12 +1,14 @@
 import { button, input, Stack, Text, textarea } from "@trebired/frontend/react";
 import { useEffect, useState, type ChangeEvent } from "react";
 import { formatMoney, localized } from "./../money.js";
-import type { Order } from "./../types.js";
+import type { Order, PickupPoint } from "./../types.js";
 import { storefrontRequest, type StorefrontError } from "./api.js";
 import { classes } from "./classes.js";
 import { useStorefront } from "./context.js";
+import { pickPickupPoint } from "./packeta.js";
 
-type Options = { payments: string[]; shipping: { id: string; label: Record<string, string>; priceMinor: number }[] };
+type ShippingChoice = { id: string; kind: string; label: Record<string, string>; priceMinor: number };
+type Options = { packeta: { apiKey: string } | null; payments: string[]; shipping: ShippingChoice[] };
 type Form = Record<"city" | "email" | "name" | "note" | "phone" | "postalCode" | "street", string>;
 
 const EMPTY: Form = { city: "", email: "", name: "", note: "", phone: "", postalCode: "", street: "" };
@@ -41,6 +43,7 @@ function useCheckout(onPlaced: (order: Order) => void) {
   const [form, setForm] = useState(EMPTY);
   const [shipping, setShipping] = useState("");
   const [payment, setPayment] = useState("");
+  const [point, setPoint] = useState<PickupPoint | null>(null);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   useEffect(() => {
@@ -61,6 +64,7 @@ function useCheckout(onPlaced: (order: Order) => void) {
         locale: store.locale,
         note: form.note,
         paymentMethod: payment,
+        pickupPoint: point,
         shippingMethodId: shipping,
       };
       const result = await storefrontRequest<{ order: Order }>(store.basePath, "/checkout", body);
@@ -73,7 +77,12 @@ function useCheckout(onPlaced: (order: Order) => void) {
       setBusy(false);
     }
   };
-  return { busy, error, form, options, payment, place, set: (
+  const choosePoint = async () => {
+    if (!options?.packeta) return;
+    const picked = await pickPickupPoint(options.packeta.apiKey, store.locale).catch(() => null);
+    if (picked) setPoint(picked);
+  };
+  return { busy, choosePoint, error, form, options, payment, place, point, set: (
       name: keyof Form,
       value: string
     ) => setForm((current) => ({ ...current, [name]: value })), setPayment, setShipping, shipping, store };
@@ -89,7 +98,8 @@ function CheckoutForm(props: { onPlaced: (order: Order) => void; paymentLabels?:
         id: option.id,
         label: `${localized(option.label, locale)} (${money(option.priceMinor)})`,
   }));
-  const paymentItems = checkout.options.payments.map((id) => ({ id, label: props.paymentLabels?.[id] ?? id }));
+  const paymentItems = checkout.options.payments.map((id) => ({ id, label: props.paymentLabels?.[id] ?? copy.paymentMethods[id] ?? id }));
+  const selected = checkout.options.shipping.find((option) => option.id === checkout.shipping);
   return (
     <Stack gap="sm">
     <Field form={checkout.form} label={copy.email} name="email" set={checkout.set} type="email" />
@@ -100,6 +110,12 @@ function CheckoutForm(props: { onPlaced: (order: Order) => void; paymentLabels?:
     <Field form={checkout.form} label={copy.city} name="city" set={checkout.set} />
     <Field form={checkout.form} label={copy.postalCode} name="postalCode" set={checkout.set} />
     <Choices items={shippingItems} onPick={checkout.setShipping} title={copy.shipping} value={checkout.shipping} />
+    {selected?.kind === "packeta" ? (
+        <div className={classes("inline-row", "gap-xs", "wrap", "ver-center")}>
+        <Text muted>{checkout.point ? `${copy.pickupPoint}: ${checkout.point.name}` : copy.choosePickupPoint}</Text>
+        {button({ children: copy.choosePickupPoint, onClick: () => void checkout.choosePoint(), variant: "secondary" })}
+        </div>
+      ) : null}
     <Choices items={paymentItems} onPick={checkout.setPayment} title={copy.payment} value={checkout.payment} />
     {textarea({
           label: copy.note,

@@ -66,6 +66,10 @@ function OrderSummary(props: { order: Order }) {
         order.shipping.label,
         locale
     )} ({order.shipping.priceMinor ? money(order.shipping.priceMinor) : copy.free})</Text>
+    {order.shipping.pickupPoint ? <Text>{copy.pickupPoint}: {order.shipping.pickupPoint.name}</Text> : null}
+    {order.shipping.packet ? (
+        <a href={order.shipping.packet.trackingUrl} rel="noopener noreferrer" target="_blank">{copy.track}</a>
+      ) : null}
     <Text as="strong">{copy.total}: {money(order.totals.totalMinor)}</Text>
     <BankTransfer order={order} />
     <OnlinePayment order={order} />

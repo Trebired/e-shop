@@ -34,6 +34,9 @@
       "#4kghf8rsudsk": [
         "../../../src/server/catalog/variants.ts"
       ],
+      "#4kwj7lcdqe55": [
+        "../../../src/server/packeta.ts"
+      ],
       "#4qf50veekcl7": [
         "../../../src/react/cart.tsx"
       ],
@@ -66,6 +69,9 @@
       ],
       "#ch08y2rwrfb7": [
         "../../../scripts/verify/shared.mjs"
+      ],
+      "#ciyeqpckrpxb": [
+        "../../../scripts/verify/packeta.mjs"
       ],
       "#co78ou1ny9ho": [
         "../../../src/server/messages.ts"
@@ -144,6 +150,9 @@
       ],
       "#rqmroeyoc2mq": [
         "../../../src/server/index.ts"
+      ],
+      "#tigc183v2l75": [
+        "../../../src/react/packeta.ts"
       ],
       "#tjl2zg037sxb": [
         "../../../src/server/admin.ts"

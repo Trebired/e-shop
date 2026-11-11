@@ -44,6 +44,7 @@ function cartRoutes(context: EshopContext, router: ReturnType<typeof createRoute
       const cart = await readCart(context.db, await cartToken(context, route), currency);
       return {
         locales: context.config.shop.locales,
+        packeta: context.config.packeta ? { apiKey: context.config.packeta.apiKey } : null,
         payments: availablePaymentMethods(context.config),
         shipping: shippingOptions(context.config, cart.subtotalMinor),
       };

@@ -12,6 +12,15 @@ function shippingOptions(config: NormalizedEshopConfig, subtotalMinor: number): 
   }));
 }
 
+const POINT_ID = /^[0-9a-z-]{1,40}$/iu;
+
+function pickupPointOf(point: any): OrderShipping["pickupPoint"] {
+  const id = String(point.id ?? "");
+  const carrierId = String(point.carrierId ?? "");
+  if (!POINT_ID.test(id) || (carrierId && !/^\d{1,10}$/u.test(carrierId))) throw badRequest("eshop-pickup-point-required");
+  return { carrierId, id, name: text(point.name, "pickupPoint.name", 300) };
+}
+
 function chooseShipping(config: NormalizedEshopConfig, input: any, subtotalMinor: number): OrderShipping {
   const method = shippingOptions(config, subtotalMinor).find((option) => option.id === input?.shippingMethodId);
   if (!method) throw badRequest("eshop-shipping-invalid");
@@ -21,7 +30,8 @@ function chooseShipping(config: NormalizedEshopConfig, input: any, subtotalMinor
     kind: method.kind as OrderShipping["kind"],
     label: method.label,
     methodId: method.id,
-    pickupPoint: method.kind === "packeta" ? { id: text(point.id, "pickupPoint.id", 40), name: text(point.name, "pickupPoint.name", 300) } : null,
+    packet: null,
+    pickupPoint: method.kind === "packeta" ? pickupPointOf(point) : null,
     priceMinor: method.priceMinor,
   };
 }

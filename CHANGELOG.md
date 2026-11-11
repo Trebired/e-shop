@@ -4,6 +4,13 @@ All notable changes to `@trebired/e-shop` will be documented here.
 
 This project follows semantic versioning once published.
 
+## 0.3.0
+
+- Added Packeta pickup points. A `packeta` shipping method needs a pickup point at checkout, chosen in the Packeta widget that `CheckoutForm` opens.
+- Shipping a Packeta order creates its packet once and uses the barcode as the tracking number. Added `POST /orders/:number/packet` and `GET /orders/:number/packet/label` to the admin API, with `createPacket` and `packetLabel` on the admin client.
+- Added the `packeta` config and the `createEshop({ packeta: { apiPassword } })` option.
+- The order page shows the pickup point and links to parcel tracking. Checkout names the payment methods.
+
 ## 0.2.0
 
 - Added card payments through Stripe Checkout, GoPay and Comgate behind one payment interface. Checkout starts the payment and returns `payment.redirectUrl`.
