@@ -4,6 +4,10 @@ All notable changes to `@trebired/e-shop` will be documented here.
 
 This project follows semantic versioning once published.
 
+## 0.6.2
+
+- Accepted `@trebired/frontend` 31 as a peer alongside 30.2, and moved development to frontend 31.0.0 and `@trebired/configs` 0.10.0. The storefront uses no API that frontend 31 changed.
+
 ## 0.6.1
 
 - `@trebired/e-shop/config` has a browser build, so a storefront can import the shop config; `loadConfig` and `findConfig` there refuse to run.
