@@ -2,9 +2,8 @@ import assert from "node:assert/strict";
 import crypto from "node:crypto";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
-import pg from "pg";
 import { resolveLogger } from "@package/logger-adapter";
-import { listen, resetDatabase, smtpSink } from "./shared.mjs";
+import { listen, openTestSql, resetDatabase, smtpSink } from "./shared.mjs";
 
 const log = resolveLogger({ source: "@trebired/e-shop" });
 const rootDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "..");
@@ -15,7 +14,7 @@ const PASSWORD = "correct horse battery";
 
 const CONFIG = {
   accounts: { resetPath: "/account/reset/{token}" },
-  forVersion: "0.6.0",
+  forVersion: "0.7.0",
   mail: { from: "shop@verify.test" },
   payments: { bankTransfer: { accountName: "Verify s.r.o.", iban: "CZ6508000000192000145399" } },
   shipping: [{ id: "pickup", kind: "pickup", label: { cs: "Osobní odběr", en: "Pickup" }, priceMinor: 0 }],
@@ -111,13 +110,13 @@ async function verifyAccounts() {
   if (!DATABASE_URL) throw new Error("TEST_DATABASE_URL is required for verify:accounts");
   const server = await importDist("server");
   const client = await importDist("client");
-  const pool = new pg.Pool({ connectionString: DATABASE_URL, max: 8 });
-  await resetDatabase(pool);
+  const sql = openTestSql(DATABASE_URL);
+  await resetDatabase(sql);
   const messages = [];
   const smtp = await smtpSink(messages);
   let eshop = null;
   const shop = await listen((req, res) => eshop.handle(req, res));
-  eshop = server.createEshop({ adminToken: TOKEN, config: CONFIG, pool, publicUrl: shop.url, smtpUrl: `smtp://127.0.0.1:${smtp.port}` });
+  eshop = server.createEshop({ adminToken: TOKEN, config: CONFIG, sql, publicUrl: shop.url, smtpUrl: `smtp://127.0.0.1:${smtp.port}` });
   await eshop.migrate();
   const admin = client.createEshopAdminClient({ baseUrl: shop.url, token: TOKEN });
   const product = (await admin.saveProduct({ name: { cs: "Hrnek", en: "Mug" }, slug: "hrnek", status: "active" })).product;
@@ -126,14 +125,14 @@ async function verifyAccounts() {
   await verifyOrdersLink(shop.url, visitor, variant.id, admin);
   await verifyLogin(shop.url);
   await verifyReset(shop.url, messages, visitor);
-  const closed = server.createEshop({ adminToken: TOKEN, config: { ...CONFIG, accounts: undefined }, pool });
+  const closed = server.createEshop({ adminToken: TOKEN, config: { ...CONFIG, accounts: undefined }, sql });
   const plain = await listen((req, res) => closed.handle(req, res));
   assert.equal((await fetch(`${plain.url}/eshop/api/account`)).status, 404, "without accounts in the config the routes do not exist");
   plain.server.close();
   shop.server.close();
   smtp.server.close();
-  await resetDatabase(pool);
-  await pool.end();
+  await resetDatabase(sql);
+  await sql.close();
   log.info("verify.accounts", "e-shop account verification passed");
 }
 

@@ -69,8 +69,8 @@ async function refreshPayment(context: EshopContext, order: Order): Promise<Orde
 
 async function orderByReference(context: EshopContext, kind: string, reference: string): Promise<Order|null> {
   const row = await context.db.one<{number:string}>(
-    "select number from eshop_orders where payment->>'method' = $1 and payment->>'reference' = $2",
-    [kind, reference],
+    "select number from eshop_orders where payment->>$3 = $1 and payment->>$4 = $2",
+    [kind, reference, "method", "reference"],
   );
   return row ? await readOrder(context.db, { number: row.number }) : null;
 }

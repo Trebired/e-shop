@@ -21,15 +21,15 @@ async function eshopStats(db: Db, input: { from?: unknown; to?: unknown }) {
   const summary = await db.one(
     `select coalesce(sum(total_minor) filter (where status = any($3::text[])), 0) as revenue_minor,
     count(*) filter (where status = any($3::text[]))::int as paid_orders, count(*)::int as orders,
-    count(*) filter (where status = 'pending_payment')::int as awaiting_payment
+    count(*) filter (where status = $4)::int as awaiting_payment
     from eshop_orders where created_at >= $1 and created_at < $2`,
-    params,
+    [...params, "pending_payment"],
   );
   const days = await db.many(
-    `select to_char(date_trunc('day', created_at), 'YYYY-MM-DD') as day, count(*)::int as orders,
+    `select to_char(date_trunc($4, created_at), $5) as day, count(*)::int as orders,
     coalesce(sum(total_minor) filter (where status = any($3::text[])), 0) as revenue_minor
     from eshop_orders where created_at >= $1 and created_at < $2 group by 1 order by 1`,
-    params,
+    [...params, "day", "YYYY-MM-DD"],
   );
   const top = await db.many(
     `select l.sku, l.name, sum(l.quantity)::int as quantity, sum(l.total_minor) as revenue_minor from eshop_order_lines l
@@ -39,8 +39,8 @@ async function eshopStats(db: Db, input: { from?: unknown; to?: unknown }) {
   );
   const lowStock = await db.many(
     `select v.id, v.sku, v.stock, p.name from eshop_variants v join eshop_products p on p.id = v.product_id
-    where v.stock is not null and v.stock <= $1 and v.active and p.status = 'active' order by v.stock, v.sku limit 50`,
-    [LOW_STOCK],
+    where v.stock is not null and v.stock <= $1 and v.active and p.status = $2 order by v.stock, v.sku limit 50`,
+    [LOW_STOCK, "active"],
   );
   const paid = Number(summary?.paid_orders ?? 0);
   return {

@@ -1,4 +1,3 @@
-import type pg from "pg";
 import type { NormalizedEshopConfig } from "./../config/types.js";
 import type { Db } from "./db/database.js";
 import type { Gateways } from "./gateways/index.js";
@@ -13,7 +12,6 @@ type EshopContext = {
   gateways: Gateways;
   mailer: Mailer;
   packeta: PacketaClient | null;
-  pool: pg.Pool;
   publicUrl: string;
 };
 

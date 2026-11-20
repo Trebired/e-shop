@@ -5,7 +5,7 @@ import type { Db } from "./../db/database.js";
 import { notFound } from "./../errors.js";
 
 const PREFIX: Record<InvoiceKind, string> = { credit_note: "D", invoice: "" };
-const INVOICE_OF_ORDER = "select number from eshop_invoices where order_id = $1 and kind = 'invoice'";
+const INVOICE_OF_ORDER = "select number from eshop_invoices where order_id = $1 and kind = $2";
 const INSERT_INVOICE = "insert into eshop_invoices (order_id, kind, number, data) values ($1, $2, $3, $4) returning *";
 
 function addressLines(address: Address): string[] {
@@ -74,7 +74,7 @@ async function issueInvoice(db: Db, config: NormalizedEshopConfig, order: Order,
       await tx.one("select id from eshop_orders where id = $1 for update", [order.id]);
       const existing = await tx.one("select * from eshop_invoices where order_id = $1 and kind = $2", [order.id, kind]);
       if (existing) return toInvoice(existing);
-      const original = kind === "credit_note" ? await tx.one<{number:string}>(INVOICE_OF_ORDER, [order.id]) : null;
+      const original = kind === "credit_note" ? await tx.one<{number:string}>(INVOICE_OF_ORDER, [order.id, "invoice"]) : null;
       if (kind === "credit_note" && !original) return null;
       const number = await nextNumber(tx, kind, new Date().getUTCFullYear());
       const data = invoiceData(config, order, kind, original?.number ?? "");

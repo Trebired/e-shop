@@ -2,9 +2,8 @@ import assert from "node:assert/strict";
 import crypto from "node:crypto";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
-import pg from "pg";
 import { resolveLogger } from "@package/logger-adapter";
-import { listen, resetDatabase } from "./shared.mjs";
+import { listen, openTestSql, resetDatabase } from "./shared.mjs";
 
 const log = resolveLogger({ source: "@trebired/e-shop" });
 const rootDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "..");
@@ -19,7 +18,7 @@ const STORE = "STORE1";
 const MERCHANT = "123456";
 
 const CONFIG = {
-  forVersion: "0.6.0",
+  forVersion: "0.7.0",
   payments: {
     bankTransfer: { accountName: "Verify s.r.o.", iban: "CZ6508000000192000145399" },
     comgate: { merchant: MERCHANT, test: true },
@@ -237,8 +236,8 @@ async function verifyBtcpay(shop, admin, state, variantId) {
   assert.equal(refunded.refundUrl, claim, "the order keeps the link where the customer claims the refund");
 }
 
-function verifyMissingSecrets(server, pool) {
-  const start = () => server.createEshop({ adminToken: TOKEN, config: CONFIG, pool });
+function verifyMissingSecrets(server, sql) {
+  const start = () => server.createEshop({ adminToken: TOKEN, config: CONFIG, sql });
   assert.throws(start, /e-shop-gateway-secrets-missing/u, "an enabled gateway without credentials stops the start");
 }
 
@@ -246,9 +245,9 @@ async function verifyGateways() {
   if (!DATABASE_URL) throw new Error("TEST_DATABASE_URL is required for verify:gateways");
   const server = await importDist("server");
   const client = await importDist("client");
-  const pool = new pg.Pool({ connectionString: DATABASE_URL, max: 8 });
-  await resetDatabase(pool);
-  verifyMissingSecrets(server, pool);
+  const sql = openTestSql(DATABASE_URL);
+  await resetDatabase(sql);
+  verifyMissingSecrets(server, sql);
   const state = { btcpay: {}, comgate: {}, gopay: {}, refunds: [], seq: 0, stripe: {} };
   const fake = await fakeGateways(state);
   let eshop = null;
@@ -262,7 +261,7 @@ async function verifyGateways() {
         gopay: { ...GOPAY, apiBase: `${fake.url}/gopay` },
         stripe: { ...STRIPE, apiBase: `${fake.url}/stripe` },
       },
-      pool,
+      sql,
       publicUrl: shop.url,
   });
   await eshop.migrate();
@@ -277,8 +276,8 @@ async function verifyGateways() {
   await verifyBtcpay(shop.url, admin, state, variant.id);
   shop.server.close();
   fake.server.close();
-  await resetDatabase(pool);
-  await pool.end();
+  await resetDatabase(sql);
+  await sql.close();
   log.info("verify.gateways", "e-shop gateway verification passed");
 }
 

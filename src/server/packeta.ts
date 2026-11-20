@@ -102,7 +102,7 @@ async function ensurePacket(context: EshopContext, number: string): Promise<Orde
   if (!client) throw new EshopError(500, "eshop-packeta-not-configured");
   const weight = await orderWeightKg(context, order.id);
   await context.db.tx(async(tx) => {
-      const row = await tx.one<{packet:unknown}>("select shipping->'packet' as packet from eshop_orders where id = $1 for update", [order.id]);
+      const row = await tx.one<{packet:unknown}>("select shipping->$2 as packet from eshop_orders where id = $1 for update", [order.id, "packet"]);
       if (row?.packet) return;
       const created = await client.createPacket(packetAttributes(context, order, weight));
       const packet: PacketaPacket = { barcode: created.barcode, id: created.id, trackingUrl: `${TRACKING_URL}${created.id}` };

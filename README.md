@@ -2,7 +2,7 @@
 
 Postgres-backed e-shop for Bun apps: catalog with variants and stock, cart, checkout, orders with a status history, Czech bank transfer payments with a QR code, card payments through Stripe, GoPay and Comgate, Bitcoin through BTCPay Server, Packeta pickup points with packet creation and labels, Czech invoices and credit notes as PDF, customer accounts, order email, a complete storefront for `@trebired/frontend` with every shop page, and a signed admin API that is always on.
 
-The package owns the shop schema, the order rules, the storefront and admin HTTP routes and the storefront components. The app owns its Postgres pool, its pages and their layout, its SMTP account, its public address, the admin token and its payment gateway accounts and credentials. The package does not own product photography storage, accounting, a customer marketing system or the admin interface itself; an admin application drives it through the admin API.
+The package owns the shop schema, the order rules, the storefront and admin HTTP routes and the storefront components. The app owns its `@trebired/store` runtime, which owns the database connection, its pages and their layout, its SMTP account, its public address, the admin token and its payment gateway accounts and credentials. The package does not own product photography storage, accounting, a customer marketing system or the admin interface itself; an admin application drives it through the admin API.
 
 ## Install
 
@@ -16,17 +16,18 @@ bun i @trebired/e-shop
 
 ```ts
 import http from "node:http";
-import pg from "pg";
+import { createStoreApplicationRuntime } from "@trebired/store";
 import { loadConfig } from "@trebired/e-shop/config";
 import { createEshop } from "@trebired/e-shop/server";
 
 const { config } = await loadConfig();
+const store = createStoreApplicationRuntime({ entities: {} });
 const eshop = createEshop({
   adminToken: process.env.ESHOP_ADMIN_TOKEN!,
   config,
-  pool: new pg.Pool({ connectionString: process.env.DATABASE_URL }),
   publicUrl: "https://shop.example",
   smtpUrl: process.env.SMTP_URL,
+  sql: store.sql,
   gateways: {
     stripe: { secretKey: process.env.STRIPE_SECRET_KEY!, webhookSecret: process.env.STRIPE_WEBHOOK_SECRET! },
   },
@@ -103,7 +104,7 @@ const sitePages = createSitePages({ error: ErrorPage, pages: (route) => storefro
 import { defineConfig } from "@trebired/e-shop/config";
 
 export default defineConfig({
-  forVersion: "0.6.0",
+  forVersion: "0.7.0",
   shop: { name: "Example", currency: "CZK", locales: ["cs", "en"] },
   vat: { defaultRate: 21 },
   shipping: [
@@ -154,7 +155,7 @@ Card payments need `publicUrl`, because the gateways send the customer and their
 
 ### Storage
 
-`migrate()` creates the `eshop_*` tables under a Postgres advisory lock and records each migration in `eshop_schema_migrations`. `pruneCarts()` deletes carts idle longer than `cart.ttlDays`.
+`migrate()` creates the `eshop_*` tables through `sql.migrate`, which runs each step once under an advisory lock and records it in the store's `store_migrations`. A database that an earlier version migrated keeps its tables: the steps it already applied are skipped, and its `eshop_schema_migrations` table is dropped. `pruneCarts()` deletes carts idle longer than `cart.ttlDays`.
 
 ### Email
 

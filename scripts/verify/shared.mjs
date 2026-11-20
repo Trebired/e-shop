@@ -1,5 +1,6 @@
 import net from "node:net";
 import http from "node:http";
+import { createStoreApplicationRuntime } from "@trebired/store";
 
 function listen(handler) {
   return new Promise((resolve) => {
@@ -8,9 +9,17 @@ function listen(handler) {
   });
 }
 
-async function resetDatabase(pool) {
-  const tables = await pool.query("select tablename from pg_tables where schemaname = 'public' and tablename like 'eshop_%'");
-  if (tables.rows.length) await pool.query(`drop table ${tables.rows.map((row) => row.tablename).join(", ")} cascade`);
+function openTestSql(databaseUrl) {
+  return createStoreApplicationRuntime({ entities: {}, postgres: { databaseUrl } }).sql;
+}
+
+async function resetDatabase(sql) {
+  await sql.admin(async(session) => {
+      const tables = await session.many("select tablename from pg_tables where schemaname = 'public' and tablename like 'eshop_%'");
+      if (tables.length) await session.exec(`drop table ${tables.map((row) => row.tablename).join(", ")} cascade`);
+      const tracked = await session.one("select to_regclass('public.store_migrations')::text as name");
+      if (tracked?.name) await session.exec("delete from store_migrations where starts_with(id, 'eshop:')");
+  });
 }
 
 async function call(url, method, pathName, body, cookie = "") {
@@ -54,4 +63,4 @@ function smtpSink(messages) {
   });
 }
 
-export { call, listen, resetDatabase, smtpSink };
+export { call, listen, openTestSql, resetDatabase, smtpSink };

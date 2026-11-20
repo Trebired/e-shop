@@ -4,6 +4,12 @@ All notable changes to `@trebired/e-shop` will be documented here.
 
 This project follows semantic versioning once published.
 
+## 0.7.0
+
+- Breaking: the shop queries through `@trebired/store`. `createEshop` takes `sql` (a store runtime's `sql`) instead of `pool`, and `@trebired/store` 4 is a peer dependency. The package no longer depends on `pg`. Queries keep bigint and numeric columns as numbers, and every value goes in as a parameter.
+- `migrate()` runs through `sql.migrate` and records its steps in `store_migrations`. A database that an earlier version migrated keeps its tables and data: steps already listed in `eshop_schema_migrations` are skipped, and that table is dropped afterwards. It still returns the ids of the migrations it applied.
+- Kept `@trebired/frontend` 30 and 31 as the peer. The storefront preset loads its data in the browser and renders through `createSitePages`, which `@trebired/frontend` 32 removed with hydration; the server, the admin API and `@trebired/e-shop/client` do not use the frontend and work beside 32.
+
 ## 0.6.3
 
 - Accepted `@trebired/frontend` 31 as a peer alongside 30.2, and moved development to frontend 31.0.0 and `@trebired/configs` 0.10.0. The storefront uses no API that frontend 31 changed.

@@ -4,9 +4,8 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
-import pg from "pg";
 import { resolveLogger } from "@package/logger-adapter";
-import { call, listen, resetDatabase } from "./shared.mjs";
+import { call, listen, openTestSql, resetDatabase } from "./shared.mjs";
 
 const log = resolveLogger({ source: "@trebired/e-shop" });
 const rootDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "..");
@@ -15,7 +14,7 @@ const TOKEN = crypto.randomBytes(32).toString("hex");
 const DATABASE_URL = process.env.TEST_DATABASE_URL;
 
 const CONFIG = {
-  forVersion: "0.6.0",
+  forVersion: "0.7.0",
   payments: { bankTransfer: { accountName: "Verify s.r.o.", iban: "CZ6508000000192000145399" } },
   shipping: [
     { id: "pickup", kind: "pickup", label: { cs: "Osobní odběr", en: "Pickup" }, priceMinor: 0 },
@@ -118,20 +117,20 @@ function verifySpayd(server) {
   );
 }
 
-async function verifyEvents(server, pool) {
+async function verifyEvents(server, sql) {
   const received = [];
   const receiver = await listen(async(req, res) => {
       const body = await new Response(req).text();
       received.push(server.verifySignature(TOKEN, { body, method: "POST", path: "/events", signature: req.headers["x-eshop-signature"], timestamp: req.headers["x-eshop-timestamp"] }));
       res.end("{}");
   });
-  const eshop = server.createEshop({ adminToken: TOKEN, config: CONFIG, eventsUrl: `${receiver.url}/events`, pool });
+  const eshop = server.createEshop({ adminToken: TOKEN, config: CONFIG, eventsUrl: `${receiver.url}/events`, sql });
   const shop = await listen((req, res) => eshop.handle(req, res));
   const cart = await call(
     shop.url,
     "POST",
     "/eshop/api/cart/items",
-    { quantity: 1, variantId: (await pool.query("select id from eshop_variants where sku = 'MUG-WHITE'")).rows[0].id }
+    { quantity: 1, variantId: (await sql.one("select id from eshop_variants where sku = $1", ["MUG-WHITE"])).id }
   );
   await call(shop.url, "POST", "/eshop/api/checkout", checkoutBody("pickup"), cart.cookie);
   assert.deepEqual(received, [true], "a new order is reported to the events URL with a valid signature");
@@ -139,11 +138,11 @@ async function verifyEvents(server, pool) {
   receiver.server.close();
 }
 
-async function verifyStorefrontPages(server, pool) {
+async function verifyStorefrontPages(server, sql) {
   const dist = fs.mkdtempSync(path.join(os.tmpdir(), "eshop-pages-"));
   fs.mkdirSync(path.join(dist, "products", "_"), { recursive: true });
   fs.writeFileSync(path.join(dist, "products", "_", "index.html"), "<html>product shell</html>");
-  const eshop = server.createEshop({ adminToken: TOKEN, config: { ...CONFIG, storefront: {} }, pool, storefrontDir: dist });
+  const eshop = server.createEshop({ adminToken: TOKEN, config: { ...CONFIG, storefront: {} }, sql, storefrontDir: dist });
   const shop = await listen((req, res) => eshop.handle(req, res));
   const product = await fetch(`${shop.url}/products/hrnek`);
   assert.equal(await product.text(), "<html>product shell</html>", "a product address is served the built product page");
@@ -157,9 +156,9 @@ async function verifyServer() {
   if (!DATABASE_URL) throw new Error("TEST_DATABASE_URL is required for verify:server");
   const server = await importDist("server");
   const client = await importDist("client");
-  const pool = new pg.Pool({ connectionString: DATABASE_URL, max: 8 });
-  await resetDatabase(pool);
-  const eshop = server.createEshop({ adminToken: TOKEN, config: CONFIG, pool });
+  const sql = openTestSql(DATABASE_URL);
+  await resetDatabase(sql);
+  const eshop = server.createEshop({ adminToken: TOKEN, config: CONFIG, sql });
   const migrations = ["eshop_001_core", "eshop_002_payment_reference", "eshop_003_invoices", "eshop_004_accounts"];
   assert.deepEqual(await eshop.migrate(), migrations, "the first run applies the schema");
   assert.deepEqual(await eshop.migrate(), [], "a second run applies nothing");
@@ -172,11 +171,11 @@ async function verifyServer() {
   const raceOrder = await verifyStockRace(url, variants);
   await verifyTransitions(admin, order, raceOrder);
   verifySpayd(server);
-  await verifyEvents(server, pool);
-  await verifyStorefrontPages(server, pool);
+  await verifyEvents(server, sql);
+  await verifyStorefrontPages(server, sql);
   http0.close();
-  await resetDatabase(pool);
-  await pool.end();
+  await resetDatabase(sql);
+  await sql.close();
   log.info("verify.server", "e-shop server verification passed");
 }
 

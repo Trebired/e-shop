@@ -2,9 +2,8 @@ import assert from "node:assert/strict";
 import crypto from "node:crypto";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
-import pg from "pg";
 import { resolveLogger } from "@package/logger-adapter";
-import { call, listen, resetDatabase, smtpSink } from "./shared.mjs";
+import { call, listen, openTestSql, resetDatabase, smtpSink } from "./shared.mjs";
 
 const log = resolveLogger({ source: "@trebired/e-shop" });
 const rootDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "..");
@@ -26,7 +25,7 @@ const SUPPLIER = {
 };
 
 const CONFIG = {
-  forVersion: "0.6.0",
+  forVersion: "0.7.0",
   invoices: { supplier: SUPPLIER },
   mail: { from: "shop@verify.test" },
   payments: { bankTransfer: { accountName: "Verify s.r.o.", iban: "CZ6508000000192000145399" } },
@@ -95,11 +94,11 @@ async function verifyInvoices() {
   const server = await importDist("server");
   const client = await importDist("client");
   verifyConfig(await importDist("config"));
-  const pool = new pg.Pool({ connectionString: DATABASE_URL, max: 8 });
-  await resetDatabase(pool);
+  const sql = openTestSql(DATABASE_URL);
+  await resetDatabase(sql);
   const messages = [];
   const smtp = await smtpSink(messages);
-  const eshop = server.createEshop({ adminToken: TOKEN, config: CONFIG, pool, smtpUrl: `smtp://127.0.0.1:${smtp.port}` });
+  const eshop = server.createEshop({ adminToken: TOKEN, config: CONFIG, sql, smtpUrl: `smtp://127.0.0.1:${smtp.port}` });
   await eshop.migrate();
   const shop = await listen((req, res) => eshop.handle(req, res));
   const admin = client.createEshopAdminClient({ baseUrl: shop.url, token: TOKEN });
@@ -116,8 +115,8 @@ async function verifyInvoices() {
   assert.equal((await admin.order(other.number)).invoices.length, 0, "cancelling an unpaid order issues nothing");
   shop.server.close();
   smtp.server.close();
-  await resetDatabase(pool);
-  await pool.end();
+  await resetDatabase(sql);
+  await sql.close();
   log.info("verify.invoices", "e-shop invoice verification passed");
 }
 

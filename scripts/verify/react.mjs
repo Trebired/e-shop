@@ -36,7 +36,7 @@ assert.equal(react.storefrontCopy("xx").cart, "Cart", "an unknown locale falls b
 const root = await import(pathToFileURL(path.join(rootDir, "dist", "index.js")).href);
 const config = await import(pathToFileURL(path.join(rootDir, "dist", "config", "index.js")).href);
 const frontendReact = await import("@trebired/frontend/react");
-const SHOP = { forVersion: "0.6.0", shop: { locales: ["cs", "en"], name: "Verify" }, storefront: {} };
+const SHOP = { forVersion: "0.7.0", shop: { locales: ["cs", "en"], name: "Verify" }, storefront: {} };
 
 function verifyRoutes() {
   const settings = config.normalizeConfig(SHOP).storefront;

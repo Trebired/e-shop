@@ -1,4 +1,4 @@
-import type pg from "pg";
+import type { StoreSql } from "@trebired/store";
 import { normalizeConfig } from "./../config/normalize.js";
 import type { EshopConfig, NormalizedEshopConfig } from "./../config/types.js";
 import { adminRouter } from "./admin.js";
@@ -20,9 +20,9 @@ type CreateEshopOptions = {
   eventsUrl?: string;
   gateways?: GatewaySecrets;
   packeta?: PacketaSecrets;
-  pool: pg.Pool;
   publicUrl?: string;
   smtpUrl?: string;
+  sql: StoreSql;
   storefrontDir?: string;
 };
 
@@ -38,7 +38,7 @@ function createEshop(options: CreateEshopOptions) {
   if (config.packeta && !options.packeta?.apiPassword) {
     throw new Error("e-shop-packeta-password-missing :: a packeta shipping method needs createEshop({ packeta: { apiPassword } })");
   }
-  const db = createDb(options.pool);
+  const db = createDb(options.sql);
   const context: EshopContext = {
     adminToken: options.adminToken,
     config,
@@ -47,7 +47,6 @@ function createEshop(options: CreateEshopOptions) {
     gateways: createGateways(config, options.gateways),
     mailer: createMailer(options.smtpUrl ?? "", config.mail.from),
     packeta: options.packeta?.apiPassword ? createPacketaClient(options.packeta) : null,
-    pool: options.pool,
     publicUrl: options.publicUrl ?? "",
   };
   const routers = [adminRouter(context), storefrontRouter(context)];
@@ -66,7 +65,7 @@ function createEshop(options: CreateEshopOptions) {
     context,
     db,
     handle,
-    migrate: async() => await migrateEshop(options.pool),
+    migrate: async() => await migrateEshop(options.sql),
     pruneCarts: async() => await pruneCarts(db, config.cart.ttlDays),
   };
 }

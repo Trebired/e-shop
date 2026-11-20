@@ -2,9 +2,8 @@ import assert from "node:assert/strict";
 import crypto from "node:crypto";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
-import pg from "pg";
 import { resolveLogger } from "@package/logger-adapter";
-import { call, listen, resetDatabase } from "./shared.mjs";
+import { call, listen, openTestSql, resetDatabase } from "./shared.mjs";
 
 const log = resolveLogger({ source: "@trebired/e-shop" });
 const rootDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "..");
@@ -15,7 +14,7 @@ const PASSWORD = "packeta-api-password";
 const LABEL = Buffer.from("%PDF-1.4 verify label");
 
 const CONFIG = {
-  forVersion: "0.6.0",
+  forVersion: "0.7.0",
   packeta: { apiKey: "public-widget-key", sender: "verify-shop" },
   payments: { bankTransfer: { accountName: "Verify s.r.o.", iban: "CZ6508000000192000145399" } },
   shipping: [{ id: "packeta", kind: "packeta", label: { cs: "Zásilkovna", en: "Packeta" }, priceMinor: 7900 }],
@@ -54,11 +53,11 @@ async function checkout(shop, variantId, pickupPoint) {
     }, cart.cookie);
 }
 
-function verifyConfig(server, config, pool) {
+function verifyConfig(server, config, sql) {
   const { packeta: _packeta, ...withoutPacketa } = CONFIG;
   const missing = /packeta\.apiKey and packeta\.sender are required/u;
   assert.throws(() => config.normalizeConfig(withoutPacketa), missing, "a packeta method needs the packeta config");
-  const start = () => server.createEshop({ adminToken: TOKEN, config: CONFIG, pool });
+  const start = () => server.createEshop({ adminToken: TOKEN, config: CONFIG, sql });
   assert.throws(start, /e-shop-packeta-password-missing/u, "packet creation needs the API password");
 }
 
@@ -105,12 +104,12 @@ async function verifyPacketa() {
   const server = await importDist("server");
   const config = await importDist("config");
   const client = await importDist("client");
-  const pool = new pg.Pool({ connectionString: DATABASE_URL, max: 8 });
-  await resetDatabase(pool);
-  verifyConfig(server, config, pool);
+  const sql = openTestSql(DATABASE_URL);
+  await resetDatabase(sql);
+  verifyConfig(server, config, sql);
   const state = { requests: [], seq: 0 };
   const fake = await fakePacketa(state);
-  const eshop = server.createEshop({ adminToken: TOKEN, config: CONFIG, packeta: { apiBase: fake.url, apiPassword: PASSWORD }, pool });
+  const eshop = server.createEshop({ adminToken: TOKEN, config: CONFIG, packeta: { apiBase: fake.url, apiPassword: PASSWORD }, sql });
   await eshop.migrate();
   const shop = await listen((req, res) => eshop.handle(req, res));
   const admin = client.createEshopAdminClient({ baseUrl: shop.url, token: TOKEN });
@@ -121,8 +120,8 @@ async function verifyPacketa() {
   await verifyCarrierPoint(shop.url, admin, state, variant.id);
   shop.server.close();
   fake.server.close();
-  await resetDatabase(pool);
-  await pool.end();
+  await resetDatabase(sql);
+  await sql.close();
   log.info("verify.packeta", "e-shop Packeta verification passed");
 }
 
